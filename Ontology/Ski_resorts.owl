@@ -1,0 +1,1746 @@
+@prefix : <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> .
+@prefix g: <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix obda: <https://w3id.org/obda/vocabulary#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology> rdf:type owl:Ontology .
+
+
+#################################################################
+#
+#    Datatypes
+#
+#################################################################
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/time_built
+
+:time_built rdf:type rdfs:Datatype ;
+            
+            owl:equivalentClass [ rdf:type rdfs:Datatype ;
+                                  owl:onDatatype xsd:time ;
+                                  owl:withRestrictions ( [ xsd:maxInclusive "12:00:00"^^xsd:time
+                                                         ]
+                                                       )
+                                ] .
+
+
+
+###  http://www.w3.org/2001/XMLSchema#time
+
+xsd:time rdf:type rdfs:Datatype .
+
+
+
+
+
+#################################################################
+#
+#    Object Properties
+#
+#################################################################
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/acquired_package
+
+:acquired_package rdf:type owl:ObjectProperty ;
+                  
+                  rdfs:range :Package ;
+                  
+                  rdfs:domain :Student .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/belongs_to_discipline
+
+:belongs_to_discipline rdf:type owl:FunctionalProperty ,
+                                owl:ObjectProperty ;
+                       
+                       rdfs:label "belongs_to_discipline" ;
+                       
+                       rdfs:comment "This property relates a Lesson (or Group Lesson) with the specific discipline which is taught on it." ;
+                       
+                       rdfs:range :Discipline ;
+                       
+                       rdfs:domain :GroupLesson ,
+                                   :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/course_is_given_by
+
+:course_is_given_by rdf:type owl:ObjectProperty ;
+                    
+                    rdfs:label "course_is_given_by" ;
+                    
+                    rdfs:comment "This property relates a Lesson (or Group Lesson) with the Teaching School (or Resort) in which it takes place." ;
+                    
+                    rdfs:domain :GroupLesson ,
+                                :Lesson ;
+                    
+                    rdfs:range :TeachingSchool ;
+                    
+                    owl:inverseOf :gives_course .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/ends_on_the_same_day
+
+:ends_on_the_same_day rdf:type owl:ObjectProperty ,
+                               owl:SymmetricProperty ,
+                               owl:TransitiveProperty ;
+                      
+                      rdfs:label "ends_on_the_same_day" ;
+                      
+                      rdfs:comment "This property relates two lessons that are scheduled to end at the same day." ;
+                      
+                      rdfs:range :Lesson ;
+                      
+                      rdfs:domain :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_english
+
+:given_in_english rdf:type owl:ObjectProperty ;
+                  
+                  rdfs:domain :GroupLesson ,
+                              :Lesson ;
+                  
+                  rdfs:range :TeachingLanguage ;
+                  
+                  rdfs:subPropertyOf :given_in_language .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language
+
+:given_in_language rdf:type owl:ObjectProperty ;
+                   
+                   rdfs:label "given_in_language" ;
+                   
+                   rdfs:comment "This object property describes in which language a Group Lesson is given" ;
+                   
+                   rdfs:domain :GroupLesson ,
+                               :Lesson ;
+                   
+                   rdfs:range :TeachingLanguage .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_season
+
+:given_in_season rdf:type owl:ObjectProperty ;
+                 
+                 rdfs:label "given_in_season" ;
+                 
+                 rdfs:comment "This property relates a Lesson (or Group Lesson) with the season in which it's given." ;
+                 
+                 rdfs:domain :GroupLesson ,
+                             :Lesson ;
+                 
+                 rdfs:range :Season .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_the_same_time_slot
+
+:given_in_the_same_time_slot rdf:type owl:ObjectProperty ,
+                                      owl:SymmetricProperty ,
+                                      owl:TransitiveProperty ;
+                             
+                             rdfs:label "given_in_the_same_time_slot" ;
+                             
+                             rdfs:comment "Relation between two lessons which are scheduled on the same year season." ;
+                             
+                             rdfs:domain :Lesson ;
+                             
+                             rdfs:range :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/gives_course
+
+:gives_course rdf:type owl:ObjectProperty ;
+              
+              rdfs:range :GroupLesson ,
+                         :Lesson ;
+              
+              rdfs:domain :TeachingSchool .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/glo_has_distanceDaysR
+
+:glo_has_distanceDaysR rdf:type owl:ObjectProperty ;
+                       
+                       rdfs:label "glo_has_distanceDaysR" ;
+                       
+                       rdfs:comment "Relates a Group Lesson Ocurrence instance with a complex GloDistanceDaysR instance. In this way, this specific glo instance will be related to a second glo and to an amount of days which represent the distance (reification). The biggest difference taken into account is 3 days." ;
+                       
+                       rdfs:range :GloDistanceDaysR ;
+                       
+                       rdfs:domain :GroupLessonOcurrence .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/glo_has_distanceDurationR
+
+:glo_has_distanceDurationR rdf:type owl:ObjectProperty ;
+                           
+                           rdfs:label "glo_has_distanceDurationR" ;
+                           
+                           rdfs:comment "Relates a Group Lesson Ocurrence instance with a complex GloDistanceDurationR instance. In this way, this specific glo instance will be related to a second glo and to an amount of days which represent the distance (reification)." ;
+                           
+                           rdfs:range :GloDistanceDurationR ;
+                           
+                           rdfs:domain :GroupLessonOcurrence ;
+                           
+                           rdfs:subPropertyOf owl:topObjectProperty .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_instructor
+
+:has_instructor rdf:type owl:ObjectProperty ;
+                
+                rdfs:domain :GroupLessonOcurrence ;
+                
+                rdfs:range :Instructor ;
+                
+                owl:equivalentProperty :instructor_assigned .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_ocurrence
+
+:has_ocurrence rdf:type owl:InverseFunctionalProperty ,
+                        owl:ObjectProperty ;
+               
+               rdfs:label "has_ocurrence" ;
+               
+               rdfs:comment "This relates a GroupLesson instance (type of group lesson) and the specific schedulings that it has (related GroupLessonOcurrences instances). The latter were previouslly grouped by week, school and type of group lesson." ;
+               
+               rdfs:domain :GroupLesson ;
+               
+               rdfs:range :GroupLessonOcurrence .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_season
+
+:has_season rdf:type owl:ObjectProperty ;
+            
+            rdfs:range :Season ;
+            
+            rdfs:domain :TeachingSchool .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_second_glo
+
+:has_second_glo rdf:type owl:FunctionalProperty ,
+                         owl:ObjectProperty ;
+                
+                rdfs:label "has_second_glo" ;
+                
+                rdfs:comment "Relation between a GloDistanceDurationR instance and a GroupLessonOcurrence instance that states the inclusion of the latter as referred by the former complex structure. Indirectly, the first Group Lesson Ocurrence instance will be related through this relation to a second glo instance (Reification)." ,
+                             "Relation between a GloDistanceDaysR instance and a GroupLessonOcurrence instance that states the inclusion of the latter as referred by the former complex structure. Indirectly, the first Group Lesson Ocurrence instance will be related through this relation to a second glo instance (Reification)." ;
+                
+                rdfs:domain :GloDistanceDaysR ,
+                            :GloDistanceDurationR ;
+                
+                rdfs:range :GroupLessonOcurrence .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_second_mp
+
+:has_second_mp rdf:type owl:FunctionalProperty ,
+                        owl:ObjectProperty ;
+               
+               rdfs:label "has_second_mp" ;
+               
+               rdfs:comment "Relation between a DistanceMeetingPointR instance and a meetingPoint instance that states the inclusion of the latter as referred by the former complex structure. Indirectly, the first meeting point instance will be related through this relation to a second mp instance (Reification)." ;
+               
+               rdfs:domain :DistanceMeetingPointR ;
+               
+               rdfs:range :MeetingPoint .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_service
+
+:has_service rdf:type owl:ObjectProperty ;
+             
+             rdfs:domain :Package ;
+             
+             rdfs:range :Service ;
+             
+             owl:inverseOf :service_of .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_student
+
+:has_student rdf:type owl:ObjectProperty ;
+             
+             rdfs:domain :GroupLesson ,
+                         :GroupLessonOcurrence .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_summerSeason
+
+:has_summerSeason rdf:type owl:ObjectProperty ;
+                  
+                  rdfs:range :Season ;
+                  
+                  rdfs:domain :SummerOpenSchool ;
+                  
+                  rdfs:subPropertyOf :has_season .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teaching_level
+
+:has_teaching_level rdf:type owl:ObjectProperty ;
+                    
+                    rdfs:label "has_teaching_level" ;
+                    
+                    rdfs:comment "This property relates a Lesson (or Group Lesson) with the level in which the corresponding discipline is taught." ;
+                    
+                    rdfs:domain :GroupLesson ,
+                                :Lesson ;
+                    
+                    rdfs:range :TeachingLevel .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/instructor_assigned
+
+:instructor_assigned rdf:type owl:ObjectProperty ;
+                     
+                     rdfs:domain :GroupLessonOcurrence ;
+                     
+                     rdfs:range :Instructor .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/learned_level
+
+:learned_level rdf:type owl:ObjectProperty ;
+               
+               rdfs:domain :Student ;
+               
+               rdfs:range :TeachingLevel .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/learns_in_language
+
+:learns_in_language rdf:type owl:ObjectProperty ;
+                    
+                    rdfs:domain :Student ;
+                    
+                    rdfs:range :TeachingLanguage .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/meeting_point_of
+
+:meeting_point_of rdf:type owl:ObjectProperty ;
+                  
+                  rdfs:range :GroupLesson ,
+                             :Lesson ;
+                  
+                  rdfs:domain :MeetingPoint ;
+                  
+                  rdfs:range :TeachingSchool ;
+                  
+                  owl:inverseOf :starts_in_place .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/mp_has_distanceMeetingPointR
+
+:mp_has_distanceMeetingPointR rdf:type owl:ObjectProperty ;
+                              
+                              rdfs:label "mp_has_distanceMeetingPointR" ;
+                              
+                              rdfs:comment "Relates a meeting point instance with a complex DistanceMeetingPointR instance. In this way, this specific mp instance will be related to a second mp and to an amount of meters (reification)." ;
+                              
+                              rdfs:range :DistanceMeetingPointR ;
+                              
+                              rdfs:domain :MeetingPoint .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/practice_discipline
+
+:practice_discipline rdf:type owl:ObjectProperty ;
+                     
+                     rdfs:range :Discipline ;
+                     
+                     rdfs:domain :Student .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/related_to_context
+
+:related_to_context rdf:type owl:ObjectProperty ;
+                    
+                    rdfs:range :Context ;
+                    
+                    rdfs:domain :GroupLesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/same_level
+
+:same_level rdf:type owl:ObjectProperty ,
+                     owl:SymmetricProperty ,
+                     owl:TransitiveProperty ;
+            
+            rdfs:label "same_level" ;
+            
+            rdfs:comment "Relation between two lessons which are given at the same skill level." ;
+            
+            rdfs:range :Lesson ;
+            
+            rdfs:domain :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/service_of
+
+:service_of rdf:type owl:ObjectProperty ;
+            
+            rdfs:label "service_of" ;
+            
+            rdfs:comment "This property associates the packages with the type of services that it includes. It'll count only once each service per property even if it's possible to have a service more than once. For example, a package could have two CCs related to two different students." ;
+            
+            rdfs:range :Package ;
+            
+            rdfs:domain :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/similar_size
+
+:similar_size rdf:type owl:ObjectProperty ,
+                       owl:SymmetricProperty ,
+                       owl:TransitiveProperty ;
+              
+              rdfs:label "similar_size" ;
+              
+              rdfs:comment "Relation between two lessons (mainly group lessons) which have a similar number of students." ;
+              
+              rdfs:domain :Lesson ;
+              
+              rdfs:range :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/starts_in_place
+
+:starts_in_place rdf:type owl:ObjectProperty ;
+                 
+                 rdfs:label "starts_in_place" ;
+                 
+                 rdfs:comment "Property that relates a Lesson (or Group Lesson) with the place (meeting point) in which I'll start. The students must go to this place some minutes before the start of the class." ;
+                 
+                 rdfs:domain :GroupLesson ,
+                             :Lesson ;
+                 
+                 rdfs:range :MeetingPoint .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/starts_on_the_same_day
+
+:starts_on_the_same_day rdf:type owl:ObjectProperty ,
+                                 owl:SymmetricProperty ,
+                                 owl:TransitiveProperty ;
+                        
+                        rdfs:label "starts_on_the_same_day" ;
+                        
+                        rdfs:comment "This property relates two lessons that are scheduled to start at the same day." ;
+                        
+                        rdfs:domain :Lesson ;
+                        
+                        rdfs:range :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_discipline
+
+:teaches_discipline rdf:type owl:ObjectProperty ;
+                    
+                    rdfs:range :Discipline ;
+                    
+                    rdfs:domain :Instructor .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in
+
+:teaches_in rdf:type owl:ObjectProperty ;
+            
+            rdfs:domain :Instructor ;
+            
+            rdfs:range :TeachingLanguage ;
+            
+            rdfs:subPropertyOf owl:topObjectProperty .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in_school
+
+:teaches_in_school rdf:type owl:ObjectProperty ;
+                   
+                   rdfs:domain :Instructor ;
+                   
+                   rdfs:range :TeachingSchool ;
+                   
+                   rdfs:subPropertyOf owl:topObjectProperty .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_level
+
+:teaches_level rdf:type owl:ObjectProperty ;
+               
+               rdfs:domain :Instructor ;
+               
+               rdfs:range :TeachingLevel .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/tsRelated_disciplineAvg
+
+:tsRelated_disciplineAvg rdf:type owl:FunctionalProperty ,
+                                  owl:ObjectProperty ;
+                         
+                         rdfs:label "tsRelated_disciplineAvg" ;
+                         
+                         rdfs:comment "Relates a teaching school instance with a complex TeachingSchoolDisciplineAvgR instance. In this way, this specific teaching school instance will be related to a discipline instance and to an average that characterizes this link (reification)." ;
+                         
+                         rdfs:range :Discipline ;
+                         
+                         rdfs:domain :TeachingSchoolDisciplineAvgR .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/ts_has_disciplineAvg
+
+:ts_has_disciplineAvg rdf:type owl:ObjectProperty ;
+                      
+                      rdfs:label "ts_has_disciplineAvg" ;
+                      
+                      rdfs:comment "Relation between a TeachingSchoolDisciplineAvgR complex instance and a teaching school instance that states the inclusion of the latter as referred by the former complex structure. Indirectly, the teaching school instance will be related through this relation to a discipline instance and to an average represented as decimal which characterizes the probability of this specific link (Reification)." ;
+                      
+                      rdfs:domain :TeachingSchool ;
+                      
+                      rdfs:range :TeachingSchoolDisciplineAvgR .
+
+
+
+
+
+#################################################################
+#
+#    Data properties
+#
+#################################################################
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Mp_address
+
+:Mp_address rdf:type owl:DatatypeProperty ;
+            
+            rdfs:domain :MeetingPoint ;
+            
+            rdfs:range xsd:string .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/distance_days_amount
+
+:distance_days_amount rdf:type owl:DatatypeProperty ,
+                               owl:FunctionalProperty ;
+                      
+                      rdfs:label "distance_days_amount" ;
+                      
+                      rdfs:comment "States the distance in days between two Group Lesson Ocurrences instances which are related through a GloDistanceDaysR complex instance (reification)." ;
+                      
+                      rdfs:domain :GloDistanceDaysR ;
+                      
+                      rdfs:range xsd:integer .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/distance_duration_amount
+
+:distance_duration_amount rdf:type owl:DatatypeProperty ,
+                                   owl:FunctionalProperty ;
+                          
+                          rdfs:label "States the distance in duration (time) between two Group Lesson Ocurrences instances which are related through a GloDistanceDurationR complex instance (reification). For a performance matter, the retrieved set is limited to 100000 rows and with a maximum difference in duration of 5 hours." ,
+                                     "distance_duration_amount" ;
+                          
+                          rdfs:domain :GloDistanceDurationR ;
+                          
+                          rdfs:range xsd:integer .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/distance_meters_weight
+
+:distance_meters_weight rdf:type owl:DatatypeProperty ,
+                                 owl:FunctionalProperty ;
+                        
+                        rdfs:label "distance_meters_weight" ;
+                        
+                        rdfs:comment "States the distance in meters between two meeting point instances which are related through a DistanceMeetingPointR complex instance (reification)." ;
+                        
+                        rdfs:domain :DistanceMeetingPointR ;
+                        
+                        rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/end_time
+
+:end_time rdf:type owl:DatatypeProperty ;
+          
+          rdfs:label "end_time" ;
+          
+          rdfs:comment "Relation that states the end time of a scheduled GroupLessonOcurrence instance. These were grouped by week, school and type of group lesson, and the maximum date for that combination is the one represented." ;
+          
+          rdfs:domain :GroupLesson ,
+                      :GroupLessonOcurrence ,
+                      :Season ;
+          
+          rdfs:range [ rdf:type rdfs:Datatype ;
+                       owl:onDatatype xsd:time ;
+                       owl:withRestrictions ( [ xsd:maxInclusive "12:00:00"^^xsd:time
+                                              ]
+                                            )
+                     ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/name
+
+:name rdf:type owl:DatatypeProperty ;
+      
+      rdfs:domain :Person ;
+      
+      rdfs:range xsd:string .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/price
+
+:price rdf:type owl:DatatypeProperty ;
+       
+       rdfs:domain :GroupLesson ;
+       
+       rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_comp
+
+:prob_school_comp rdf:type owl:DatatypeProperty ,
+                           owl:FunctionalProperty ;
+                  
+                  rdfs:label "prob_school_comp" ;
+                  
+                  rdfs:comment "Relationship that represents the probability of giving a competition lesson as a service in an specific teaching school." ;
+                  
+                  rdfs:domain :TeachingSchool ;
+                  
+                  rdfs:range xsd:decimal ;
+                  
+                  rdfs:subPropertyOf owl:topDataProperty .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_ffs
+
+:prob_school_ffs rdf:type owl:DatatypeProperty ,
+                          owl:FunctionalProperty ;
+                 
+                 rdfs:label "prob_school_ffs" ;
+                 
+                 rdfs:comment "Relationship that represents the probability of receiving beneficence from the customers in an specific teaching school." ;
+                 
+                 rdfs:domain :TeachingSchool ;
+                 
+                 rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_gl
+
+:prob_school_gl rdf:type owl:DatatypeProperty ,
+                         owl:FunctionalProperty ;
+                
+                rdfs:label "prob_school_gl" ;
+                
+                rdfs:comment "Relationship that represents the probability of giving a group lesson as a service in an specific teaching school." ;
+                
+                rdfs:domain :TeachingSchool ;
+                
+                rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_hotel
+
+:prob_school_hotel rdf:type owl:DatatypeProperty ,
+                            owl:FunctionalProperty ;
+                   
+                   rdfs:label "prob_school_hotel" ;
+                   
+                   rdfs:comment "Relationship that represents the probability of booking a hotel by the customers in an specific teaching school." ;
+                   
+                   rdfs:domain :TeachingSchool ;
+                   
+                   rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_insurance
+
+:prob_school_insurance rdf:type owl:DatatypeProperty ,
+                                owl:FunctionalProperty ;
+                       
+                       rdfs:label "prob_school_insurance" ;
+                       
+                       rdfs:comment "Relationship that represents the probability of giving an insurance as a service in an specific teaching school." ;
+                       
+                       rdfs:domain :TeachingSchool ;
+                       
+                       rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_kindg
+
+:prob_school_kindg rdf:type owl:DatatypeProperty ,
+                            owl:FunctionalProperty ;
+                   
+                   rdfs:label "prob_school_kindg" ;
+                   
+                   rdfs:comment "Relationship that represents the probability of giving a kindergarten place as a service in an specific teaching school." ;
+                   
+                   rdfs:domain :TeachingSchool ;
+                   
+                   rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_lift
+
+:prob_school_lift rdf:type owl:DatatypeProperty ,
+                           owl:FunctionalProperty ;
+                  
+                  rdfs:label "prob_school_lift" ;
+                  
+                  rdfs:comment "Relationship that represents the probability of booking a lift by the customers in an specific teaching school." ;
+                  
+                  rdfs:domain :TeachingSchool ;
+                  
+                  rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_pl
+
+:prob_school_pl rdf:type owl:DatatypeProperty ,
+                         owl:FunctionalProperty ;
+                
+                rdfs:label "prob_school_pl" ;
+                
+                rdfs:comment "Relationship that represents the probability of giving a private lesson as a service in an specific teaching school." ;
+                
+                rdfs:domain :TeachingSchool ;
+                
+                rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_skiRental
+
+:prob_school_skiRental rdf:type owl:DatatypeProperty ,
+                                owl:FunctionalProperty ;
+                       
+                       rdfs:label "prob_school_skiRental" ;
+                       
+                       rdfs:comment "Relationship that represents the probability of renting ski equipment as a service in an specific teaching school." ;
+                       
+                       rdfs:domain :TeachingSchool ;
+                       
+                       rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_testl
+
+:prob_school_testl rdf:type owl:DatatypeProperty ,
+                            owl:FunctionalProperty ;
+                   
+                   rdfs:label "prob_school_testl" ;
+                   
+                   rdfs:comment "Relationship that represents the probability of giving a test lesson as a service in an specific teaching school." ;
+                   
+                   rdfs:domain :TeachingSchool ;
+                   
+                   rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/prob_school_transfer
+
+:prob_school_transfer rdf:type owl:DatatypeProperty ,
+                               owl:FunctionalProperty ;
+                      
+                      rdfs:label "prob_school_transfer" ;
+                      
+                      rdfs:comment "Relationship that represents the probability of renting a transfer as a service in an specific teaching school." ;
+                      
+                      rdfs:domain :TeachingSchool ;
+                      
+                      rdfs:range xsd:decimal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/start_time
+
+:start_time rdf:type owl:DatatypeProperty ;
+            
+            rdfs:label "start_time" ;
+            
+            rdfs:comment "Relation that states the start time of a scheduled GroupLessonOcurrence instance. These were grouped by week, school and type of group lesson, and the minimum date for that combination is the one represented." ;
+            
+            rdfs:domain :GroupLesson ,
+                        :GroupLessonOcurrence ,
+                        :Season ;
+            
+            rdfs:range xsd:dateTimeStamp .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/student_birthday
+
+:student_birthday rdf:type owl:DatatypeProperty ;
+                  
+                  rdfs:domain :Student ;
+                  
+                  rdfs:range xsd:dateTime ;
+                  
+                  rdfs:subPropertyOf owl:topDataProperty .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/student_name
+
+:student_name rdf:type owl:DatatypeProperty ;
+              
+              rdfs:label "student_name" ;
+              
+              rdfs:comment "Complete name of a student which had a record in the table of custom orders." ;
+              
+              rdfs:domain :Student ;
+              
+              rdfs:range xsd:string .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/ts_discipline_avg
+
+:ts_discipline_avg rdf:type owl:DatatypeProperty ,
+                            owl:FunctionalProperty ;
+                   
+                   rdfs:label "ts_discipline_avg" ;
+                   
+                   rdfs:comment "States the average that links a teaching school instance and a discipline instance which are related through a TeachingSchoolDisciplineAvgR complex instance (reification)." ;
+                   
+                   rdfs:domain :TeachingSchoolDisciplineAvgR ;
+                   
+                   rdfs:range xsd:decimal .
+
+
+
+
+
+#################################################################
+#
+#    Classes
+#
+#################################################################
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Abstract
+
+:Abstract rdf:type owl:Class ;
+          
+          rdfs:subClassOf :Entity .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Certificate
+
+:Certificate rdf:type owl:Class ;
+             
+             rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Collection
+
+:Collection rdf:type owl:Class .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson
+
+:CompetitionLesson rdf:type owl:Class ;
+                   
+                   rdfs:subClassOf :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Context
+
+:Context rdf:type owl:Class ;
+         
+         rdfs:subClassOf :Abstract ;
+         
+         rdfs:comment "Class used for the definition of contexts. Then, each context will have a relationship or link with a set of classes." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/DayPeriod
+
+:DayPeriod rdf:type owl:Class ;
+           
+           rdfs:label "Day Period" ;
+           
+           rdfs:subClassOf :Time ;
+           
+           rdfs:comment "This class represents the codes which are used by schools to define a period of the day. Each of these periods has an interval of time associated." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline
+
+:Discipline rdf:type owl:Class ;
+            
+            rdfs:label "Discipline" ;
+            
+            rdfs:subClassOf :Abstract ;
+            
+            rdfs:comment "Disciplines that could have place in the lessons such as Ski Nordic, Ski Alpine, Snowboard, etc." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/DistanceMeetingPointR
+
+:DistanceMeetingPointR rdf:type owl:Class ;
+                       
+                       rdfs:label "Distance Meeting Point Reification" ;
+                       
+                       rdfs:subClassOf :Abstract ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :distance_meters_weight ;
+                                         owl:someValuesFrom xsd:decimal
+                                       ] ,
+                                       [ rdf:type owl:Restriction ;
+                                         owl:onProperty :has_second_mp ;
+                                         owl:someValuesFrom :MeetingPoint
+                                       ] ;
+                       
+                       rdfs:comment "A complex class which represents a compound string relating two meeting points as 'mp1-mp2' which have registered a distance between them. This class is pointed by a mp instance in order to obtain a reification." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/EnglishInstructor
+
+:EnglishInstructor rdf:type owl:Class ;
+                   
+                   owl:equivalentClass [ rdf:type owl:Class ;
+                                         owl:intersectionOf ( :Instructor
+                                                              [ rdf:type owl:Restriction ;
+                                                                owl:onProperty :teaches_in ;
+                                                                owl:hasValue :EN
+                                                              ]
+                                                            )
+                                       ] ;
+                   
+                   rdfs:subClassOf :Instructor .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/EnglishLesson
+
+:EnglishLesson rdf:type owl:Class ;
+               
+               owl:equivalentClass [ rdf:type owl:Class ;
+                                     owl:intersectionOf ( :Lesson
+                                                          [ rdf:type owl:Restriction ;
+                                                            owl:onProperty :given_in_language ;
+                                                            owl:hasValue :EN
+                                                          ]
+                                                        )
+                                   ] ;
+               
+               rdfs:subClassOf :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Entity
+
+:Entity rdf:type owl:Class .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GloDistanceDaysR
+
+:GloDistanceDaysR rdf:type owl:Class ;
+                  
+                  rdfs:label "Group Lesson Distance in Days Reification" ;
+                  
+                  rdfs:subClassOf :Abstract ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :has_second_glo ;
+                                    owl:someValuesFrom :GroupLessonOcurrence
+                                  ] ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :distance_days_amount ;
+                                    owl:someValuesFrom xsd:integer
+                                  ] ;
+                  
+                  rdfs:comment "A complex class which represents a compound string relating two Group Lesson Ocurrences instances as 'glo1_differenceInDays(integer)_glo2' which have registered a distance in days between them. This class is pointed by a glo instance in order to obtain a reification. 3 days is the maximum taken into account." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GloDistanceDurationR
+
+:GloDistanceDurationR rdf:type owl:Class ;
+                      
+                      rdfs:label "Group Lesson Ocurrences Distance Duration Reification" ;
+                      
+                      rdfs:subClassOf :Abstract ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :distance_duration_amount ;
+                                        owl:someValuesFrom xsd:integer
+                                      ] ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :has_second_glo ;
+                                        owl:someValuesFrom :GroupLessonOcurrence
+                                      ] ;
+                      
+                      rdfs:comment "A complex class which represents a compound string relating two Group Lesson Ocurrences instances as 'glo1_differenceInDuration(integer)_glo2' which have registered a distance in duration (time) between them. This class is pointed by a glo instance in order to obtain a reification. For a performance matter, the retrieved set is limited to 100000 rows and with a maximum difference in duration of 5 hours." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson
+
+:GroupLesson rdf:type owl:Class ;
+             
+             rdfs:label "Group Lesson"^^rdfs:Literal ;
+             
+             owl:equivalentClass [ rdf:type owl:Class ;
+                                   owl:intersectionOf ( :GroupLesson
+                                                        [ rdf:type owl:Restriction ;
+                                                          owl:onProperty :has_student ;
+                                                          owl:maxCardinality "6"^^xsd:nonNegativeInteger
+                                                        ]
+                                                      )
+                                 ] ,
+                                 [ rdf:type owl:Class ;
+                                   owl:intersectionOf ( :GroupLesson
+                                                        [ rdf:type owl:Restriction ;
+                                                          owl:onProperty :end_time ;
+                                                          owl:someValuesFrom :time_built
+                                                        ]
+                                                      )
+                                 ] ;
+             
+             rdfs:subClassOf :Lesson ;
+             
+             rdfs:comment "Lessons which are given for a group of people."^^rdfs:Literal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLessonOcurrence
+
+:GroupLessonOcurrence rdf:type owl:Class ;
+                      
+                      rdfs:label "Group Lesson Ocurrence" ;
+                      
+                      rdfs:subClassOf :GroupLesson ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :glo_has_distanceDaysR ;
+                                        owl:allValuesFrom :GloDistanceDaysR
+                                      ] ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :has_student ;
+                                        owl:onClass :Student ;
+                                        owl:maxQualifiedCardinality "8"^^xsd:nonNegativeInteger
+                                      ] ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :has_instructor ;
+                                        owl:onClass :Instructor ;
+                                        owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger
+                                      ] ,
+                                      [ rdf:type owl:Restriction ;
+                                        owl:onProperty :has_instructor ;
+                                        owl:allValuesFrom :Instructor
+                                      ] ;
+                      
+                      rdfs:comment "This class represent the group lessons which were actually scheduled (either for the past or for the future). In addition, and for simplifying, only those which were scheduled in (and after) the year 2022 are being taken into account. Moreover, those lessons which were schedule for the same week, school and type of group lesson (group lesson instance) are grouped." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel
+
+:Hotel rdf:type owl:Class ;
+       
+       rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor
+
+:Instructor rdf:type owl:Class ;
+            
+            owl:equivalentClass [ rdf:type owl:Class ;
+                                  owl:intersectionOf ( :Person
+                                                       [ rdf:type owl:Class ;
+                                                         owl:complementOf :Student
+                                                       ]
+                                                     )
+                                ] ;
+            
+            rdfs:subClassOf :Person ,
+                            [ rdf:type owl:Restriction ;
+                              owl:onProperty :teaches_discipline ;
+                              owl:onClass :Discipline ;
+                              owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger
+                            ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance
+
+:Insurance rdf:type owl:Class ;
+           
+           rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten
+
+:Kindergarten rdf:type owl:Class ;
+              
+              rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lesson
+
+:Lesson rdf:type owl:Class ;
+        
+        rdfs:subClassOf :Service ,
+                        [ rdf:type owl:Restriction ;
+                          owl:onProperty :given_in_language ;
+                          owl:onClass :TeachingLanguage ;
+                          owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger
+                        ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lift
+
+:Lift rdf:type owl:Class ;
+      
+      rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal
+
+:Meal rdf:type owl:Class ;
+      
+      owl:equivalentClass [ rdf:type owl:Class ;
+                            owl:oneOf ( :Brunch
+                                        :Snack
+                                        :Breakfast
+                                        :Dinner
+                                        :Lunch
+                                      )
+                          ] ;
+      
+      rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint
+
+:MeetingPoint rdf:type owl:Class ;
+              
+              rdfs:label "Meeting Point" ;
+              
+              rdfs:subClassOf :Object ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty :meeting_point_of ;
+                                owl:onClass :TeachingSchool ;
+                                owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger
+                              ] ,
+                              [ rdf:type owl:Restriction ;
+                                owl:onProperty :meeting_point_of ;
+                                owl:allValuesFrom :TeachingSchool
+                              ] ;
+              
+              rdfs:comment "Exact place in which a lesson will start. The students and instructors will meet at this place some minutes before the lesson begins." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Object
+
+:Object rdf:type owl:Class ;
+        
+        rdfs:subClassOf :Entity .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package
+
+:Package rdf:type owl:Class ;
+         
+         rdfs:label "Package"^^rdfs:Literal ;
+         
+         rdfs:subClassOf :Collection ;
+         
+         rdfs:comment "A package contains one or more products that were sold together to a customer. This class contains only the respective IDs and takes into account those which had place from 2022 up to date."^^rdfs:Literal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Person
+
+:Person rdf:type owl:Class ;
+        
+        owl:equivalentClass [ rdf:type owl:Class ;
+                              owl:unionOf ( :Instructor
+                                            :Student
+                                          )
+                            ] ;
+        
+        rdfs:subClassOf :Object ,
+                        [ rdf:type owl:Restriction ;
+                          owl:onProperty :name ;
+                          owl:someValuesFrom xsd:string
+                        ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson
+
+:PrivateLesson rdf:type owl:Class ;
+               
+               rdfs:subClassOf :Lesson ,
+                               [ rdf:type owl:Restriction ;
+                                 owl:onProperty :has_instructor ;
+                                 owl:onClass :Instructor ;
+                                 owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger
+                               ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season
+
+:Season rdf:type owl:Class ;
+        
+        rdfs:label "Season" ;
+        
+        rdfs:subClassOf :Time ;
+        
+        rdfs:comment "This class represents the natural seasons but also the specific seasons that could be related to the ski resorts. An example of the latter would be the entire season 2022/2023."^^rdfs:Literal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Service
+
+:Service rdf:type owl:Class ;
+         
+         rdfs:label "Service" ;
+         
+         rdfs:subClassOf :Abstract ;
+         
+         rdfs:comment "Service contains \"products\" that a customer or student could acquire as part of a package. Examples are group lessons, private lessons, test lessons and kindergarten." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental
+
+:SkiRental rdf:type owl:Class ;
+           
+           owl:equivalentClass [ rdf:type owl:Class ;
+                                 owl:oneOf ( :Gloves
+                                             :Skateboard
+                                             :Helmet
+                                             :Boots
+                                             :Clothes
+                                             :Ski
+                                             :Sticks
+                                           )
+                               ] ;
+           
+           rdfs:subClassOf :Service .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student
+
+:Student rdf:type owl:Class ;
+         
+         owl:equivalentClass [ rdf:type owl:Class ;
+                               owl:oneOf ( :Begginer
+                                           :Advanced
+                                           :Intermediate
+                                         )
+                             ] ;
+         
+         rdfs:subClassOf :Person ,
+                         [ rdf:type owl:Restriction ;
+                           owl:onProperty :acquired_package ;
+                           owl:allValuesFrom :Package
+                         ] .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SummerOpenSchool
+
+:SummerOpenSchool rdf:type owl:Class ;
+                  
+                  rdfs:subClassOf :TeachingSchool ,
+                                  [ rdf:type owl:Restriction ;
+                                    owl:onProperty :has_season ;
+                                    owl:hasValue :Summer
+                                  ] ;
+                  
+                  rdfs:comment "This class describes a teaching school that gives classes in summer." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage
+
+:TeachingLanguage rdf:type owl:Class ;
+                  
+                  rdfs:label "Language" ;
+                  
+                  rdfs:subClassOf :Abstract ;
+                  
+                  rdfs:comment "Languages in which the lessons are given. This class could be also related to the languages spoken by an instructor or a student."^^rdfs:Literal .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLevel
+
+:TeachingLevel rdf:type owl:Class ;
+               
+               rdfs:label "Teaching Level" ;
+               
+               rdfs:subClassOf :Abstract ;
+               
+               rdfs:comment "Levels in which a specific discipline could be taught." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool
+
+:TeachingSchool rdf:type owl:Class ;
+                
+                rdfs:label "Teaching School" ;
+                
+                rdfs:subClassOf :Object ,
+                                [ rdf:type owl:Restriction ;
+                                  owl:onProperty :has_season ;
+                                  owl:onClass :Season ;
+                                  owl:maxQualifiedCardinality "4"^^xsd:nonNegativeInteger
+                                ] ;
+                
+                rdfs:comment "School where ski lessons are given. They could be named also as resorts." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchoolDisciplineAvgR
+
+:TeachingSchoolDisciplineAvgR rdf:type owl:Class ;
+                              
+                              rdfs:label "Teaching School Discipline Average Reification" ;
+                              
+                              rdfs:subClassOf :Abstract ,
+                                              [ rdf:type owl:Restriction ;
+                                                owl:onProperty :ts_discipline_avg ;
+                                                owl:someValuesFrom xsd:decimal
+                                              ] ,
+                                              [ rdf:type owl:Restriction ;
+                                                owl:onProperty :tsRelated_disciplineAvg ;
+                                                owl:someValuesFrom :Discipline
+                                              ] ;
+                              
+                              rdfs:comment "A complex class which represents a compound string relating a teaching school instance and a discipline instance as 'teachingSchool_discipline' which have registered an average that characterizes the probability that these two instances are linked. This class is pointed by a teaching school instance in order to obtain a reification." .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson
+
+:TestLesson rdf:type owl:Class ;
+            
+            rdfs:subClassOf :Lesson .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Time
+
+:Time rdf:type owl:Class ;
+      
+      rdfs:subClassOf :Entity .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Transfer
+
+:Transfer rdf:type owl:Class ;
+          
+          rdfs:subClassOf :Service .
+
+
+
+
+
+#################################################################
+#
+#    Individuals
+#
+#################################################################
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Advanced
+
+:Advanced rdf:type :Student ,
+                   owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Alpine
+
+:Alpine rdf:type :Discipline ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Begginer
+
+:Begginer rdf:type :Student ,
+                   owl:NamedIndividual ;
+          
+          owl:sameAs :Newbie .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Boots
+
+:Boots rdf:type :SkiRental ,
+                owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Breakfast
+
+:Breakfast rdf:type :Meal ,
+                    owl:NamedIndividual ;
+           
+           owl:sameAs :Desayuno .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Brunch
+
+:Brunch rdf:type :Meal ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Clothes
+
+:Clothes rdf:type :SkiRental ,
+                  owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Desayuno
+
+:Desayuno rdf:type :Meal ,
+                   owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Dinner
+
+:Dinner rdf:type :Meal ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/EN
+
+:EN rdf:type :TeachingLanguage ,
+             owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/FR
+
+:FR rdf:type :TeachingLanguage ,
+             owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Fall
+
+:Fall rdf:type :Season ,
+               owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Gloves
+
+:Gloves rdf:type :SkiRental ,
+                 owl:NamedIndividual ;
+        
+        owl:sameAs :Guantes .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GoodWeather
+
+:GoodWeather rdf:type :Context ,
+                      owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson1
+
+:GroupLesson1 rdf:type :GroupLesson ,
+                       owl:NamedIndividual ;
+              
+              :related_to_context :GoodWeather .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Guantes
+
+:Guantes rdf:type :SkiRental ,
+                  owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Helmet
+
+:Helmet rdf:type :SkiRental ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Histo
+
+:Histo rdf:type :Discipline ,
+                owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Intermediate
+
+:Intermediate rdf:type :Student ,
+                       owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Johnson
+
+:Johnson rdf:type owl:NamedIndividual ;
+         
+         :teaches_in :EN .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lesson1
+
+:Lesson1 rdf:type owl:NamedIndividual ;
+         
+         :ends_on_the_same_day :Lesson2 .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lesson2
+
+:Lesson2 rdf:type owl:NamedIndividual ;
+         
+         :ends_on_the_same_day :Lesson3 .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lesson3
+
+:Lesson3 rdf:type owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Lunch
+
+:Lunch rdf:type :Meal ,
+                owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Merienda
+
+:Merienda rdf:type :Meal ,
+                   owl:NamedIndividual ;
+          
+          owl:sameAs :Snack .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Newbie
+
+:Newbie rdf:type :Student ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Nordic
+
+:Nordic rdf:type :Discipline ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Other
+
+:Other rdf:type :Discipline ,
+                owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Skateboard
+
+:Skateboard rdf:type :SkiRental ,
+                     owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Ski
+
+:Ski rdf:type :SkiRental ,
+              owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Snack
+
+:Snack rdf:type :Meal ,
+                owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Spring
+
+:Spring rdf:type :Season ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Sticks
+
+:Sticks rdf:type :SkiRental ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Summer
+
+:Summer rdf:type :Season ,
+                 owl:NamedIndividual .
+
+
+
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Winter
+
+:Winter rdf:type :Season ,
+                 owl:NamedIndividual .
+
+
+
+
+
+#################################################################
+#
+#    Annotations
+#
+#################################################################
+
+
+owl:Thing owl:versionInfo "Version 29-04-2024" ;
+          
+          owl:priorVersion "Version 17-01-2024" .
+
+
+
+
+
+#################################################################
+#
+#    General axioms
+#
+#################################################################
+
+
+[ rdf:type owl:AllDisjointClasses ;
+  owl:members ( :CompetitionLesson
+                :GroupLesson
+                :PrivateLesson
+                :TestLesson
+              )
+] .
+[ rdf:type owl:AllDifferent ;
+  owl:distinctMembers ( :Advanced
+                        :Begginer
+                        :Intermediate
+                      )
+] .
+[ rdf:type owl:AllDifferent ;
+  owl:distinctMembers ( :Breakfast
+                        :Brunch
+                        :Dinner
+                        :Lunch
+                        :Snack
+                      )
+] .
+
+
+
+
+###  Generated by the OWL API (version 3.4.2) http://owlapi.sourceforge.net
+
