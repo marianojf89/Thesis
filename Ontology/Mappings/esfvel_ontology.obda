@@ -1,0 +1,1885 @@
+[PrefixDeclaration]
+:		http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology
+g:		http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/
+owl:		http://www.w3.org/2002/07/owl#
+rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
+xml:		http://www.w3.org/XML/1998/namespace
+xsd:		http://www.w3.org/2001/XMLSchema#
+obda:		https://w3id.org/obda/vocabulary#
+rdfs:		http://www.w3.org/2000/01/rdf-schema#
+
+[MappingDeclaration] @collection [[
+mappingId	teaching-language-instances
+target		:#TeachingLanguage/{CodeLangue} a :#TeachingLanguage . 
+source		SELECT
+			cLibD.Libelle AS CodeLangue
+			FROM
+			[EsfVEL].[dbo].[ComLangue] cLang
+			INNER JOIN [EsfVEL].[dbo].[ComLibelleDetail] cLibD ON (cLibD.IdComLibelle= cLang.IdComLibelle)
+			WHERE
+			cLibD.IdComLangue = 2 AND cLibD.IdComTypeLibelle = 1
+
+mappingId	package-instances
+target		:#Package/{totalOrders} a :#Package . 
+source		SELECT totalOrders.order_id AS totalOrders
+			FROM (
+			SELECT ord.order_id
+			FROM [EsfVEL].[dbo].[orders-csv] ord
+			INNER JOIN [EsfVEL].[dbo].[orders-esf-csv] ordEsf ON (ordEsf.order_id = ord.order_id)
+			WHERE ord.stay_from != 'NULL' AND CAST(ord.stay_from AS DATE) >= CONVERT(VARCHAR,'01/01/2022',101) AND ord.status = 'paid'
+			UNION
+			SELECT ord.order_id
+			FROM [EsfVEL].[dbo].[orders-csv] ord
+			INNER JOIN [EsfVEL].[dbo].[orders-esf-custom-csv] ordEsfCustom ON (CONVERT(VARCHAR,ordEsfCustom.order_id) = CONVERT(VARCHAR,ord.order_id))
+			WHERE CONVERT(VARCHAR, ordEsfCustom.order_id) != 'NULL' AND ord.order_id != 'NULL'
+			AND ord.stay_from != 'NULL' AND CAST(ord.stay_from AS DATE) >= CONVERT(VARCHAR,'01/01/2022',101)  AND ord.status = 'paid'
+			) totalOrders
+
+mappingId	group-lesson-instances
+target		:#GroupLesson/{IdGroupLesson} a :#GroupLesson . 
+source		SELECT CAST(TPCC.NoEcole AS VARCHAR) + CAST(TPCC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] TPCC
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = TPCC.IdTecPrestation AND TPC.NoEcole = TPCC.NoEcole)
+			WHERE TPCC.IdComSaison >= 60
+
+mappingId	cc-given-in-language
+target		:#GroupLesson/{IdGroupLesson} :#given_in_language :#TeachingLanguage/{Language} . 
+source		SELECT DISTINCT CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson, cLibD.Libelle AS Language
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC.IdTecPrestation AND TPC.NoEcole = CC.NoEcole)
+			INNER JOIN [EsfVEL].[dbo].[TecLangueEnseignement] TL ON (TL.idTecLangueEnseignement = CC.IdTecLangueEnseignement)
+			INNER JOIN [EsfVEL].[dbo].[ComLangue] LAN ON (LAN.IdComLangue = TL.IdComLangue)
+			INNER JOIN [EsfVEL].[dbo].[ComLibelleDetail] cLibD ON (cLibD.IdComLibelle= LAN.IdComLibelle)
+			WHERE
+			CC.IdComSaison >= 60 AND cLibD.IdComLangue = 2 AND cLibD.IdComTypeLibelle = 1
+
+mappingId	teaching-school-instance
+target		:#TeachingSchool/{libelle} a :#TeachingSchool . 
+source		SELECT libelle
+			FROM [EsfVEL].[dbo].[resorts]
+
+mappingId	cc-starts-in-place
+target		:#GroupLesson/{IdGroupLesson} :#starts_in_place :#MeetingPoint/{CodeLieuRendezVous} . 
+source		SELECT CAST(TPCC.NoEcole AS VARCHAR) + CAST(TPCC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson, LIE.CodeLieuRendezVous
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] TPCC
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = TPCC.IdTecPrestation AND TPC.NoEcole = TPCC.NoEcole)
+			INNER JOIN [EsfVEL].[dbo].[TecLieuRendezVous] LIE ON (LIE.IdTecLieuRendezVous = TPCC.IdTecLieuRendezVous)
+			WHERE TPCC.IdComSaison >= 60
+
+mappingId	cc-course-is-given-by
+target		:#GroupLesson/{IdGroupLesson} :#course_is_given_by :#TeachingSchool/{Nom} . 
+source		SELECT DISTINCT ECO.Nom, CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[RefEcole] ECO ON (ECO.NoEcole = CC.NoEcole)
+			WHERE
+			CC.IdComSaison >= 60
+
+mappingId	meeting-point-instance
+target		:#MeetingPoint/{CodeLieuRendezVous} a :#MeetingPoint . 
+source		SELECT DISTINCT CodeLieuRendezVous
+			FROM
+			[EsfVEL].[dbo].[TecLieuRendezVous]
+
+mappingId	discipline-instances
+target		:#Discipline/{discipline_label} a :#Discipline . 
+source		SELECT
+			DISTINCT
+			out1.discipline_label
+			FROM (
+			SELECT
+			CASE
+			WHEN esf_custom.discipline_label IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN esf_custom.discipline_code = 'BIAT' THEN 'BIATHLON'
+			WHEN esf_custom.discipline_label IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU') THEN 'CLUB PIOU PIOU'
+			WHEN esf_custom.discipline_label IN ('Compétition','Ski Alpin Compétition') THEN 'COMPETITION'
+			WHEN esf_custom.discipline_label IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO') THEN 'FREE STYLE'
+			WHEN esf_custom.discipline_label IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN esf_custom.discipline_label IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL') THEN 'HANDISKI'
+			WHEN esf_custom.discipline_label IN ('Garden','Jardin','JARDIN ENFANT ALPIN') OR esf_custom.discipline_code IN ('JARD','JDN') THEN 'KINDERGARTEN'
+			WHEN esf_custom.discipline_label IN ('SKI NORDIQUE SKATING') THEN 'NORDIC SKATE'
+			WHEN esf_custom.discipline_label IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE') OR esf_custom.discipline_code IN ('NORDIQUE','NORD') THEN 'NORDIC SKI'
+			WHEN esf_custom.discipline_label IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE') THEN 'OFF PISTE'
+			WHEN esf_custom.discipline_label IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE') THEN 'RANDONEE'
+			WHEN esf_custom.discipline_label IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating' ) THEN 'SKATE DE FOND'
+			WHEN esf_custom.discipline_label IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant') OR esf_custom.discipline_code IN ('ALP','ALPIN','SKI-ALPIN') THEN 'SKI ALPIN'
+			WHEN esf_custom.discipline_label IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING') THEN 'SKI DE FOND'
+			WHEN esf_custom.discipline_label IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN esf_custom.discipline_label IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf')  OR esf_custom.discipline_code IN ('SKA','SKATING','SNO','SNOW','SNOWBOARD') THEN 'SNOWBOARD'
+			WHEN esf_custom.discipline_label IN ('Télémark') THEN 'TELEMARK'
+			ELSE esf_custom.discipline_label
+			END AS discipline_label
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			LEFT JOIN (
+			SELECT
+			id = b.Id,
+			orderID = b.order_id,
+			price = b.price,
+			merchant = b.merchant
+			,fromDate = c.fromDate
+			,discipline_code = c.discipline_code
+			,discipline_label = c.discipline_label
+			,levelLesson = c.levelLesson
+			,levelName = c.levelName
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			fromDate VARCHAR(10) '$.from'
+			,discipline_code VARCHAR(100) '$.activity.code'
+			,discipline_label VARCHAR(100) '$.activity.label'
+			,levelLesson VARCHAR(100) '$.pax[0].level'
+			,levelName VARCHAR(100) '$.pax[0].levelName'
+			) c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			) esf_custom ON (CAST(esf_custom.orderID AS VARCHAR(100)) = ord.order_id)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			AND ord.esf_custom = '1'
+			AND esf_custom.discipline_code NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins','NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER')
+			GROUP BY
+			ord.resort, res.libelle, esf_custom.discipline_label
+			, esf_custom.discipline_code
+			UNION ALL
+			SELECT
+			esf_custom.discipline_label
+			FROM
+			(SELECT
+			CASE   WHEN discipline IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN discipline IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN discipline IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN discipline IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN discipline IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN discipline IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN discipline IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN discipline IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN discipline IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN discipline IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN discipline IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN discipline IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN discipline IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN discipline IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN discipline IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN discipline IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN discipline IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN discipline IN ('Télémark') THEN 'TELEMARK'
+			ELSE discipline
+			END AS discipline_label
+			FROM
+			(   SELECT
+			resort = c.resort
+			,discipline = c.discipline
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(
+			resort VARCHAR(10) '$.resort'
+			,discipline VARCHAR(100) '$.product.activity'
+			) c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.discipline != 'NULL' AND c.discipline != ''
+			AND c.discipline NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP')
+			) insc1
+			UNION ALL
+			SELECT
+			CASE   WHEN b.activity IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN b.activity IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN b.activity IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN b.activity IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN b.activity IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN b.activity IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN b.activity IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN b.activity IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN b.activity IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN b.activity IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN b.activity IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN b.activity IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN b.activity IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN b.activity IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN b.activity IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN b.activity IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN b.activity IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN b.activity IN ('Télémark') THEN 'TELEMARK'
+			ELSE b.activity
+			END AS discipline_label
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind'
+			) c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL'
+			AND b.activity NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP','TEAM PERFORMANCE')
+			) esf_custom
+			) out1
+
+mappingId	cc-belongs-to-discipline
+target		:#GroupLesson/{IdGroupLesson} :#belongs_to_discipline :#Discipline/{discipline_label} . 
+source		SELECT
+			CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson,
+			CASE
+			WHEN TS.CodeSpecialite IN ('BABY_SKI','BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSNOW','BABY-SNOW','BABY','BABYSKIEUR','BBSKI','BEBESKIEUR','BEBE-SKIEUR') THEN 'BABY SKI'
+			WHEN TS.CodeSpecialite IN ('--WEEKBIAT','BIAT','AM-FUN-BIATHLON','ASBIATHLON','BIA','BIAT22LR','BIATH','--BIATH-10','BIATH50','--BIATH-50','BIATHFON','BIATHL','BIATHLON10','BIATHLONCLASSIC','BIATHLONLASERPLOMB','BIATHLONSKATING','BIATH-PB','BIATINIT','--BIAT-LASER','BIATLH','BIATPLB','BIAT-N') THEN 'BIATHLON'
+			WHEN TS.CodeSpecialite IN ('SNOW_E','SKI-ENFANTS','PIOUWEEK','PIOUPIOUNOR','PIOU-PIOU3A','PIOU-PIOU','PIOUPIOU','PIOU','PETIT-SURFER','MINIPIOU','MINILOUPS','JARDIN-PG','CPP','Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU','ALPPIO','CLUBPIOU','--CLUBPIOU','CLUBPIOUPIOU') THEN 'CLUB PIOU PIOU'
+			WHEN TS.CodeSpecialite IN ('SUPRACE','STAGES-COMPET','STAGE-PERFORMANCE','STAGE-MINI-CHAMPION','STAGE-COMP','STAGE_ELPRO','STAGE','SCI-CLUB-ESF-COMP','MODCOMP','Compétition','Ski Alpin Compétition','COMP','COMPET','COMPJ') THEN 'COMPETITION'
+			WHEN TS.CodeSpecialite IN ('STYLE_SNO','STYLE_SKI','STYLE','SKI-FREESTYLE','SKIF','FSTYL','FS-SKI','FRSTSK','FRESTYSKI','FRESTYLE','FREESTYLE-SKI','FREESTYLESKI','FREESTYLE_SKI','FREEST-SKI','FREEST','FREESSKI','FREE-SKI','FREES','FREERD','FREER','FREEELPRO','FREE','freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO') THEN 'FREE STYLE'
+			WHEN TS.CodeSpecialite IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN TS.CodeSpecialite IN ('HANDI-T','HANDI','Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL') THEN 'HANDISKI'
+			WHEN TS.CodeSpecialite IN ('JARDENF','KIDSCLUB','JE','JDN','JARNORD','JARDINFOND','JARDALP','JARD','JARBOUL','JARALP','JAR','Garden','Jardin','JARDIN ENFANT ALPIN','CHALET') THEN 'KINDERGARTEN'
+			WHEN TS.CodeSpecialite IN ('SKINORSK','SKIFSJATING','NORDSKAT','NORDSK','NORDIQUE-SKATING','NORDIQSKATING','SKI NORDIQUE SKATING','SKAT') THEN 'NORDIC SKATE'
+			WHEN TS.CodeSpecialite IN ('SKNOR','SKINORD','SKINOR','SKIFCLASSIQUE','NORDIQUE-PACK','NORDIQUE-CLASSIQUE','NORDIQUECLASSIC','NORDIQCLASSIQUE','NORDIC','NORD-CLASSIQUE','NORDCLAS','NORDC','NORD','DCLICNORDIC','AVENTURE-NORDIQUE','AM-FUN-NORDIQUE','NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE') THEN 'NORDIC SKI'
+			WHEN TS.CodeSpecialite IN ('INIT-HP','HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','HORSPISTE','HORS-PISTE-GUIDES','HP','HP_SKI_3VALLEES','HP_SNO_3VALLEES','HPISTE','HP-MONAL') THEN 'OFF PISTE'
+			WHEN TS.CodeSpecialite IN ('SNOOCTOURING','SKIRANDO-RACLETTE','SKIRANDONORDIQUE','SKI-RANDONNEE','SKIRANDONNEE','SKIRANDO-APERO','SKIRANDOALPIN','SKI-RANDO','SKIRANDO','SKIRAND','SKI-DE-RANDONNEE','SKI-DE-RANDO','SKIDERANDO','SKI_RANDONNEE','SKI_RANDO','SKI_DE_RANDO','RQT','RQ','RAQUETTES-NUIT','RAQUETTESARC','RAQUETTESALPIN','RAQUETTE-RACLETTE','RAQUETTEARC','RAQUETTE-APERO','--RAQUETTE','RAQUET','RAQUE','RAQU','--RAQ-NOCT','RAQ_CO','--RAQ','RAQ','RANDO-SKI','RANDOSKI','RANDO-RAQUETTES','RANDOPEDESTRE','RANDO-NORDIC','RANDONNEE_SKI','RANDONNEE','RANDOALPINE','RANDOALP','RAND','NM-TRACE-SKIRANDO','NMT','NM-RIDE-FREERANDO','NM_RAQUETTES','MARCHNORD','MARCHENORDIQUE','MARCHENORD','MARCHE','SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando /
+			s','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','--BACKCOUNTRY','ASRAQUETTE') THEN 'RANDONEE'
+			WHEN TS.CodeSpecialite IN ('SKT','SKI-FOND-SKATE','SKATEBOARD','--SKATE','SKATE','SDFSKATE','FONDSKATING','FOND_SKATE','Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating' ) THEN 'SKATE DE FOND'
+			WHEN TS.CodeSpecialite IN ('SKIENF','SKI-ALPIN','SKIALPIN','SKIALP','SKI-ADULTES','SKIADU','SKIADO','SKIA','SKI_ALP','SALP','SA','ALPSKI','ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','ALP') THEN 'SKI ALPIN'
+			WHEN TS.CodeSpecialite IN ('SKI-FOND-CLASS','SKIFOND','SKIDEFOND','SFOND','SFD','SF','SDF','FOND-CLASSIQUE','FONDCLASSIQUE','FONDCLASSIC','FOND_CLASSIQUE','SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','ALT','ALTERNATIF','FD') THEN 'SKI DE FOND'
+			WHEN TS.CodeSpecialite IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN TS.CodeSpecialite IN ('TEAMRIDERSNOW','SUPER-5-SNOWBOARD','STGSNOW','SNOWB','SNOWA','SNOW_EL_PRO','SNOW_A','SNO','SN','SB','NM-TRACE-SPLITBOARD','NM-SECU-SNOW','NM-RIDE-SNOW','FRSTSN','FREESTYLE-SNOW','FREESTYLE_SNO','FREESNOW','FREERIDESNOW','SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf','CLUBSNW')  THEN 'SNOWBOARD'
+			WHEN TS.CodeSpecialite IN ('Télémark','TELE','TELEM','TK') THEN 'TELEMARK'
+			ELSE TS.CodeSpecialite
+			END AS discipline_label
+			FROM
+			EsfVEL.dbo.TecPrestationCc CC
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC.IdTecPrestation AND TPC.NoEcole = CC.NoEcole)
+			INNER JOIN EsfVEL.dbo.TecSpecialite TS ON (CC.IdTecSpecialite = TS.IdTecSpecialite)
+			WHERE
+			CC.IdComSaison >= 60
+			AND TS.CodeSpecialite  NOT IN ('PERF','ESCAPE-GAMES','ZAPPINGVACNOEL','YOONERSNOWSCOOT','YOON','YOO','YONNER','WINTERGAMES','WINTER-CAMP','--WEEK','VTTELEC','VTTAE','VTT','VISITE-VILLAGE','VISITETUFFES','VISITE-FORT','VIA-FERRATA','TRS','TROT-RX'
+			,'TRIPADO','TRAPPEURS','TRAP','TRANSPORT','TRAMPO','TRACE','TOP6','TNTT','TITPOUS','TIR-LASER','TIRLASER','TIR-CARABINE-LASER','TIRALARC','TIR_ARC','TIR','TEST-TECHNIQUE','TEAMRIDERSKI','TEAMRIDE'
+			,'TEAMR','TEAM-GLIZZLY','TEAMETOILE','TEAMET','TEAM-ESF','TEAM_ETOILE','TEAM','TALKIE','SURVIE','SUPER-5-GRANDENFANT','STAGE-TRAPPEUR','STAGE-ADULTE','SPLITBOARD','SOIREE','SNOW-SUPER8','SNOWCAMPS'
+			,'SNOWBIKE','SNOOC','SNAKES','SNAKELUGE','SNAKEGLISS','SNAKE_GLISS','SNAKE','SLENF','SLAD','SKWAL','SKIT','SKI-SUPER8','SKI-STAGES','SKI-JOERING','SKI-FUN','SKIFREQUENCE','SKA','SK','SCOOT'
+			,'SCI-CLUB-ESF','SAUT','SAU','SAN','SAMEDISKI-JARDIN','RM','RIDER','RIDE','RESPONSABLE','REPAS','RAQUETHLON','RAFTING','PTITS-POUSSINS','PTITES-SPTATULES','PTITE-SPAT','PTIT','PRIVILEGE8','PREPA-PHYSIQUE'
+			,'PRE-CLUB','PRECLUB','PIOURS','PETITSTRAPPEURS','PERFORMANCE','PASS','PARET','PARAPENTE','PAINTBALL','PACK-SECURITE','PACKSECU','PACK-RIDE','ORGCOMP','OLYMPIADES','NM-TRACE','NM-SECU-SKI','NM-SECURITE'
+			,'NM-SECU-','NM-RIDE-SKI','NM-RIDE','NM_SECU','NEIGEMONTAGNE-TRACE','NEIGE-MONTAGNE-TRACE','NEIGEMONTAGNE-SECU','NEIGE-MONTAGNE-SECU','NEIGE-MONTAGNE-RIDE','NEIGE_ET_MONT_TRACE','NEIGE_ET_MONT_SECU'
+			,'NEIGE_ET_MONT_RIDE','NEIGE ','NATCAMP','MUSHING','MULTIGLISSE','MULTI-ACTIVITES','MULTIACTIVITES','MULTI-ACTIVITE','MULTIACTI','MULTI-ACT','MULTI','MOUNTAINKART','MONTAGE-MONTALBERT','MONTAGE-MILEADE'
+			,'MONTAGE-DOU','MONT','MONOSKI','MODSNOW','MOD','MIXTE','--MISEENPLACE'
+			,'MINIRIDER','MARMO','LUGE','LUDIQUE','LP','LOUVE','LOUPSROUGES','LAZER-BIATH','LASER','LAMPIONS','LAMP','K-TITOURSON','JUNIORSWOLVES','INTERVENTION','INTERSOC','INITIATION-TIR-LAZER'
+			,'--IGLOO','HLS','HELISKI','GT','GRPEL','GROUPE-DE','GROUPE','GOLF','GAR','FR','FORFAIT','FOND-SKATING','FONDSKAT','FLAMBEAUX','FLAMBEAU','FLAMB','FL','FATEBIKE','FATBIKE','FAT','EXPOSE'
+			,'EVO','ESPRITCLUB','ESFB','ESF-ACADEMY','ESFACADEMY','ESFACAD','ESF_ACADEMY',' ESCAPE-GAMES','ESCAPEGAME','ESCAPE','ESCALADE','ENG','ELPROSNOW','ELPRO','ECOLE-DES-NEIGES','--DVASECU','DVA'
+			,'DV','DUST','DIVERS','DHIVER','DESCFLAMBEAUX','DESCENTE-FLAMBEAUX','DESCENTEFLAMBEAUX','DESC_FLAMBEAUX','DEMONTAGE-MONTALBERT','DEMONTAGE-MILEADE','DEMONTAGE-DOU','DEFILE','DECOUVERTE','DAF'
+			,'CP-REGROUPE-SNOW','CP-REGROUPE-SKI','CP-PARTAGES','CP-COMPOSES','CO','CLUB-MED-SNOW','CLUB-MED','CLUB-JEUNES','CLUB-ESF-SNOW','CLUBESFSNOW','CLUB-ESF-RIDER','CLUB-ESF','CLUBESF','CLUB-ADOS'
+			,'CLUB_MED','CLUB_ESF','--CLASSIC','CLAS','CHASSE-AU-TRESOR','CHASSE','CHAMPION','BIG','CASCADE','BALADE-LAMPION','BAL','--ASSURANCE','ASDVA','ARVAMONTAGNE','ARAVISSECURITE','APRES-SKI','AIRB'
+			,'AIR','ADOSKI-TEAM-RIDER','ADOSKISCOOL','ACTIVITESLUDIQUES','ACTIV','ABSENT','ACCROBRANCHE','BAMBINOURS','AUTRE','ACADEMY','ACTIVITES-NEIGES','ACTIVITESDIVERSES','ACCRO','Assurance Carré Neige'
+			,'NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP')
+
+mappingId	season-instances
+target		:#Season/{IdComSaison} a :#Season ; :#start_time {DateDebutSaison}^^xsd:dateTimeStamp ; :#end_time {DateFinSaison}^^xsd:dateTimeStamp . 
+source		SELECT IdComSaison, DateDebutSaison, DateFinSaison
+			FROM EsfVEL.dbo.ComSaison
+			WHERE
+			IdComSaison >= 60
+
+mappingId	cc-given-in-season
+target		:#GroupLesson/{IdGroupLesson} :#given_in_season :#Season/{IdComSaison} . 
+source		SELECT CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson, CC.IdComSaison
+			FROM EsfVEL.dbo.TecPrestationCc CC
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC.IdTecPrestation AND TPC.NoEcole = CC.NoEcole)
+			WHERE
+			CC.IdComSaison >= 60
+
+mappingId	teaching-level-instances
+target		:#TeachingLevel/{CodeNiveauEnseignement} a :#TeachingLevel . 
+source		SELECT DISTINCT CodeNiveauEnseignement
+			FROM
+			EsfVEL.dbo.ComNiveauEnseignement
+
+mappingId	cc-has-teaching-level
+target		:#GroupLesson/{IdGroupLesson} :#has_teaching_level :#TeachingLevel/{CodeNiveauEnseignement} . 
+source		SELECT CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson, NE.CodeNiveauEnseignement
+			FROM
+			EsfVEL.dbo.ComNiveauEnseignement NE
+			INNER JOIN
+			EsfVEL.dbo.TecPrestationCc CC
+			ON (NE.IdComNiveauEnseignement = CC.IdComNiveauEnseignement)
+			WHERE
+			CC.IdComSaison >= 60
+
+mappingId	cc-service-of
+target		:#Service/{serviceInstance} :#service_of :#Package/{totalOrders} . 
+source		SELECT DISTINCT
+			ord.order_id AS totalOrders,
+			CASE c.serviceAlt
+			WHEN 'CC' THEN 'Group Lesson'
+			WHEN 'CP' THEN 'Private Lesson'
+			WHEN 'EPREUV' THEN 'Test Lesson'
+			WHEN 'GARDE' THEN 'Kindergarten'
+			END AS serviceInstance
+			FROM [EsfVEL].[dbo].[orders-csv] ord
+			INNER JOIN [EsfVEL].[dbo].[orders-esf-csv] ordEsf ON (ordEsf.order_id = ord.order_id)
+			CROSS APPLY OPENJSON (ordEsf.inscriptions) WITH
+			(
+			serviceDesc VARCHAR(100) '$.product.name'
+			,serviceN VARCHAR(100) '$.product.kind'
+			,serviceCode VARCHAR(100) '$.product.structure[0].code'
+			,serviceAlt VARCHAR(100) '$.codes.kinds[0]'
+			) c
+			WHERE ord.stay_from != 'NULL' AND CAST(ord.stay_from AS DATE) >= CONVERT(VARCHAR,'01/01/2022',101) AND ord.status = 'paid'
+
+mappingId	groupLesson-same-level
+target		:#/GroupLesson/{IdGroupLesson} :#same_level :#/GroupLesson/{IdGroupLesson2} . 
+source		SELECT
+			CAST(CC2.NoEcole AS VARCHAR) + CAST(CC2.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson,
+			CAST(CC1.NoEcole AS VARCHAR) + CAST(CC1.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson2
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC2
+			INNER JOIN [EsfVEL].[dbo].[ComNiveauEnseignement] NE2 ON (CC2.IdComNiveauEnseignement = NE2.IdComNiveauEnseignement)
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC2.IdTecPrestation AND TPC.NoEcole = CC2.NoEcole)
+			INNER JOIN (
+			SELECT CC.IdTecPrestationCc, CC.IdComSaison, CC.NoEcole, NE.IdComNiveauEnseignement, NE.CodeNiveauEnseignement
+			FROM [EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[ComNiveauEnseignement] NE ON (CC.IdComNiveauEnseignement = NE.IdComNiveauEnseignement)
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC.IdTecPrestation AND TPC.NoEcole = CC.NoEcole)) CC1
+			ON (CC1.NoEcole = CC2.NoEcole AND CC1.IdComNiveauEnseignement = NE2.IdComNiveauEnseignement)
+			WHERE
+			CC2.IdTecPrestationCc != CC1.IdTecPrestationCc AND
+			CC1.IdComSaison >= 60 AND CC2.IdComSaison >= 60
+
+mappingId	groupLesson-same-time-slot
+target		:#GroupLesson/{IdGroupLesson} :#given_in_the_same_time_slot :#GroupLesson/{IdGroupLesson2} . 
+source		SELECT
+			CAST(CC2.NoEcole AS VARCHAR) + CAST(CC2.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson,
+			CAST(CC1.NoEcole AS VARCHAR) + CAST(CC1.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson2,
+			CC2.IdComSaison
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC2
+			INNER JOIN [EsfVEL].[dbo].[TecPeriodeJournee] PER2 ON (CC2.NoEcole = PER2.NoEcole AND CC2.IdTecPeriodeJournee = PER2.IdTecPeriodeJournee)
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC2.IdTecPrestation AND TPC.NoEcole = CC2.NoEcole)
+			INNER JOIN (
+			SELECT CC.NoEcole, CC.IdComSaison, CC.IdTecPrestationCc, PER.IdTecPeriodeJournee, PER.CodePeriodeJournee, PER.HeureDebutPeriodeJournee, PER.HeureFinPeriodeJournee
+			FROM [EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecPeriodeJournee] PER ON (CC.NoEcole = PER.NoEcole AND CC.IdTecPeriodeJournee = PER.IdTecPeriodeJournee)
+			INNER JOIN [EsfVEL].[dbo].TecPrestation TPC ON (TPC.IdTecPrestation = CC.IdTecPrestation AND TPC.NoEcole = CC.NoEcole)) CC1
+			ON (CC1.NoEcole = CC2.NoEcole AND CC1.HeureDebutPeriodeJournee = PER2.HeureDebutPeriodeJournee AND CC1.HeureFinPeriodeJournee = PER2.HeureFinPeriodeJournee AND CC1.IdComSaison = CC2.IdComSaison)
+			WHERE
+			CC2.IdTecPrestationCc != CC1.IdTecPrestationCc AND
+			CC1.IdComSaison >= 60 AND CC2.IdComSaison >= 60
+
+mappingId	distance-to-meeting-point
+target		:#DistanceTo/{CLRDV1}-{CLRDV2} a :#DistanceMeetingPointR ; :#has_second_mp :#MeetingPoint/{CLRDV2} ; :#distance_meters_weight {EUCLIDEAN_DISTANCE}^^xsd:decimal . :#MeetingPoint/{CLRDV1} :#mp_has_distanceMeetingPointR :#DistanceTo/{CLRDV1}-{CLRDV2} . 
+source		SELECT DISTINCT RV.CodeLieuRendezVous as CLRDV1, RV3.CodeLieuRendezVous as CLRDV2, round(sqrt(power(RV.Latitude-RV3.Latitude,2)+power(RV.Longitude-RV3.Longitude,2)),4) as EUCLIDEAN_DISTANCE
+			FROM [EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecLieuRendezVous] RV ON (CC.IdTecLieuRendezVous = RV.IdTecLieuRendezVous AND CC.IdComSaison = RV.IdComSaison)
+			JOIN (SELECT CC2.IdComSaison, RV2.Longitude, RV2.Latitude, RV2.IdTecLieuRendezVous, RV2.CodeLieuRendezVous FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC2
+			INNER JOIN
+			[EsfVEL].[dbo].[TecLieuRendezVous] RV2
+			ON (CC2.IdTecLieuRendezVous = RV2.IdTecLieuRendezVous  AND CC2.IdComSaison = RV2.IdComSaison)
+			) RV3
+			ON (1 = 1)
+			WHERE CC.IdComSaison >= 60 AND RV3.IdComSaison >= 60
+			AND RV.CodeLieuRendezVous != RV3.CodeLieuRendezVous
+
+mappingId	meeting-point-of
+target		:#MeetingPoint/{RV} :#meeting_point_of :#GroupLesson/{IdGroupLesson} . 
+source		SELECT DISTINCT CAST(CC.NoEcole AS VARCHAR) + CAST(CC.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson, RV.CodeLieuRendezVous as RV
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN
+			[EsfVEL].[dbo].[TecLieuRendezVous] RV
+			ON (CC.IdTecLieuRendezVous = RV.IdTecLieuRendezVous)
+			WHERE
+			CC.IdComSaison >= 60
+
+mappingId	cc-group-lesson-ocurrences
+target		:#Timetable/{IdGroupLessonOcurrence} :#start_time {DateHeureDebutHoraireCc}^^xsd:dateTimeStamp ; :#end_time {DateHeureFinHoraireCc}^^xsd:dateTimeStamp . 
+source		SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence
+			FROM
+			(
+			SELECT DISTINCT
+			( DATEDIFF( day,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			( DATEDIFF( day,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc,
+			CC.IdComSaison
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 60
+			) CCD
+			GROUP BY CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart
+
+mappingId	cc-haveOcurrence
+target		:#GroupLesson/{IdGroupLesson} :#has_ocurrence :#GroupLesson/{IdGroupLessonOcurrence} . 
+source		SELECT DISTINCT
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(CCD.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence
+			FROM
+			(
+			SELECT DISTINCT
+			( DATEDIFF( day,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			( DATEDIFF( day,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc,
+			CC.IdComSaison
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE CC.IdComSaison >= 60
+			) CCD
+			GROUP BY CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart
+
+mappingId	gl-ocurrences-distance-in-days
+target		:#GloDistanceDaysR/{CompleteDayDifference} a :#GloDistanceDaysR ; :#has_second_glo :#GroupLesson/{IdGroupLessonOcurrence2} ; :#distance_days_amount {distanceDays_amount}^^xsd:integer . :#GroupLesson/{IdGroupLessonOcurrence} :#glo_has_distanceDaysR :#GloDistanceDaysR/{CompleteDayDifference} . 
+source		SELECT
+			dayDiff.CompleteDayDifference,
+			SUBSTRING(dayDiff.CompleteDayDifference,0,CHARINDEX('_',dayDiff.CompleteDayDifference,0)) AS IdGroupLessonOcurrence,
+			SUBSTRING(dayDiff.CompleteDayDifference, (LEN(dayDiff.CompleteDayDifference) - CHARINDEX('_',REVERSE(dayDiff.CompleteDayDifference))+2), (LEN(dayDiff.CompleteDayDifference) - (LEN(dayDiff.CompleteDayDifference) - CHARINDEX('_',REVERSE(dayDiff.CompleteDayDifference))+1))) AS IdGroupLessonOcurrence2,
+			distanceDays_amount
+			FROM
+			(SELECT DISTINCT
+			(CASE
+			WHEN (ocgl1.IdGroupLessonOcurrence < ocgl2.IdGroupLessonOcurrence) THEN CAST(ocgl1.IdGroupLessonOcurrence AS VARCHAR)
+			ELSE CAST(ocgl2.IdGroupLessonOcurrence AS VARCHAR)
+			END
+			+ '_'
+			+ CAST(ABS(DATEDIFF(DAY, ocgl1.DateHeureDebutHoraireCc, ocgl2.DateHeureDebutHoraireCc)) AS VARCHAR)
+			+ '_'
+			+ CASE
+			WHEN (ocgl2.IdGroupLessonOcurrence > ocgl1.IdGroupLessonOcurrence) THEN CAST(ocgl2.IdGroupLessonOcurrence AS VARCHAR)
+			ELSE CAST(ocgl1.IdGroupLessonOcurrence AS VARCHAR)
+			END) AS CompleteDayDifference,
+			CAST(ABS(DATEDIFF(DAY, ocgl1.DateHeureDebutHoraireCc, ocgl2.DateHeureDebutHoraireCc)) AS VARCHAR) AS distanceDays_amount
+			FROM
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc,
+			CC.IdComSaison
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl1
+			INNER JOIN
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc,
+			CC.IdComSaison
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl2 ON (ocgl2.NoEcole = ocgl1.NoEcole AND ocgl2.IdTecHoraireCc != ocgl1.IdTecHoraireCc)
+			WHERE ocgl1.IdGroupLessonOcurrence != ocgl2.IdGroupLessonOcurrence
+			) dayDiff
+			WHERE distanceDays_amount <= 3
+
+mappingId	starts-on-the-same-day
+target		:#GroupLesson/{IdGroupLessonOcurrence} :#starts_on_the_same_day :#GroupLesson/{IdGroupLessonOcurrence2} . 
+source		SELECT
+			ocgl1.IdGroupLessonOcurrence,
+			ocgl2.IdGroupLessonOcurrence AS IdGroupLessonOcurrence2,
+			ocgl1.DateHeureDebutHoraireCc
+			FROM
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl1
+			INNER JOIN
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl2 ON (ocgl2.NoEcole = ocgl1.NoEcole AND ocgl2.IdTecHoraireCc != ocgl1.IdTecHoraireCc)
+			WHERE
+			ABS(DATEDIFF(DAY, ocgl1.DateHeureDebutHoraireCc, ocgl2.DateHeureDebutHoraireCc) ) = 0
+			AND ocgl1.IdGroupLessonOcurrence != ocgl2.IdGroupLessonOcurrence
+
+mappingId	ends-on-the-same-day
+target		:#GroupLesson/{IdGroupLessonOcurrence} :#ends_on_the_same_day :#GroupLesson/{IdGroupLessonOcurrence2} . 
+source		SELECT
+			ocgl1.IdGroupLessonOcurrence,
+			ocgl2.IdGroupLessonOcurrence AS IdGroupLessonOcurrence2,
+			ocgl1.DateHeureFinHoraireCc
+			FROM
+			( SELECT DISTINCT
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureFinHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl1
+			INNER JOIN
+			( SELECT DISTINCT
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureFinHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			CC.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl2 ON (ocgl2.NoEcole = ocgl1.NoEcole AND ocgl2.IdTecHoraireCc != ocgl1.IdTecHoraireCc)
+			WHERE
+			ABS(DATEDIFF(DAY, ocgl1.DateHeureFinHoraireCc, ocgl2.DateHeureFinHoraireCc) ) = 0
+			AND ocgl1.IdGroupLessonOcurrence != ocgl2.IdGroupLessonOcurrence
+
+mappingId	group_lesson_similar_size
+target		:#GroupLesson/{IdGroupLesson} :#similar_size :#GroupLesson/{IdGroupLesson2} . 
+source		SELECT
+			CAST(CC2.NoEcole AS VARCHAR) + CAST(CC2.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson,
+			CAST(CC1.NoEcole AS VARCHAR) + CAST(CC1.IdTecPrestationCc AS VARCHAR) AS IdGroupLesson2
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC2
+			INNER JOIN [EsfVEL].[dbo].[TecPrestationCc] CC1 ON (CC2.NoEcole = CC1.NoEcole AND CC2.IdTecRatioCoursCc = CC1.IdTecRatioCoursCc)
+			WHERE
+			CC2.IdTecPrestationCc != CC1.IdTecPrestationCc AND CC1.IdComSaison >= 61 AND CC2.IdComSaison >= 61
+
+mappingId	cc-distance-in-duration
+target		:#DistanceDuration/{idDistanceDurationDifference} a :#GloDistanceDurationR ; :#has_second_glo :#GroupLesson/{IdGroupLessonOcurrence2} ; :#distance_duration_amount {DurationDifference}^^xsd:integer . :#GroupLesson/{IdGroupLessonOcurrence} :#glo_has_distanceDurationR :#DistanceDuration/{idDistanceDurationDifference} . 
+source		SELECT DISTINCT TOP 100000
+			ocgl2.IdGroupLessonOcurrence + '_' + ocgl3.IdGroupLessonOcurrence AS idDistanceDurationDifference,
+			ocgl2.IdGroupLessonOcurrence,
+			ocgl3.IdGroupLessonOcurrence AS IdGroupLessonOcurrence2,
+			ABS(ocgl2.durationInDays - ocgl3.durationInDays) AS DurationDifference
+			FROM
+			( SELECT DISTINCT
+			ABS(DATEDIFF(DAY, ocgl1.DateHeureDebutHoraireCc, ocgl1.DateHeureFinHoraireCc)) + 1 AS durationInDays,
+			IdGroupLessonOcurrence,
+			NoEcole,
+			IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			-- ( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			--HOR.DateHeureDebutHoraireCc >= GETDATE()
+			HOR.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl1 ) ocgl2
+			INNER JOIN
+			( SELECT DISTINCT
+			ABS(DATEDIFF(DAY, ocgl1.DateHeureDebutHoraireCc, ocgl1.DateHeureFinHoraireCc)) + 1 AS durationInDays,
+			IdGroupLessonOcurrence,
+			NoEcole,
+			IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			MIN(CCD.DateHeureDebutHoraireCc) AS DateHeureDebutHoraireCc,
+			MAX(CCD.DateHeureFinHoraireCc) AS DateHeureFinHoraireCc,
+			CAST(CCD.NoEcole AS VARCHAR) + CAST(MIN(CCD.IdTecHoraireCc) AS VARCHAR) AS IdGroupLessonOcurrence,
+			CCD.NoEcole,
+			MIN(CCD.IdTecHoraireCc) AS IdTecHoraireCc
+			FROM
+			( SELECT DISTINCT
+			( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureDebutHoraireCc) / 7 ) AS iDweekStart,
+			-- ( DATEDIFF( DAY,'1970-01-04',HOR.DateHeureFinHoraireCc) / 7 ) AS iDweekEnd,
+			HOR.NoEcole,
+			HOR.IdTecPrestationCc,
+			HOR.IdTecHoraireCc,
+			HOR.DateHeureDebutHoraireCc,
+			HOR.DateHeureFinHoraireCc
+			FROM
+			[EsfVEL].[dbo].[TecPrestationCc] CC
+			INNER JOIN [EsfVEL].[dbo].[TecHoraireCc] HOR ON (HOR.NoEcole = CC.NoEcole AND HOR.IdTecPrestationCc = CC.IdTecPrestationCc)
+			WHERE
+			--HOR.DateHeureDebutHoraireCc >= GETDATE()
+			HOR.IdComSaison >= 61
+			) CCD
+			GROUP BY
+			CCD.NoEcole, CCD.IdTecPrestationCc, iDweekStart ) ocgl1 ) ocgl3 ON (ocgl3.NoEcole = ocgl2.NoEcole AND ocgl3.IdTecHoraireCc != ocgl2.IdTecHoraireCc)
+			WHERE
+			ocgl2.IdGroupLessonOcurrence != ocgl3.IdGroupLessonOcurrence
+			AND ABS(ocgl2.durationInDays - ocgl3.durationInDays) <= 5
+
+mappingId	teaching-school-prob-group-lesson
+target		:#TeachingSchool/{nom} :/prob_school_gl {avg_code_kind}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			CAST(CAST(COUNT(cod.codes_kinds) AS INT)/CAST(res.total_resort AS NUMERIC) AS DECIMAL(10,7)) AS avg_code_kind
+			FROM
+			(SELECT
+			resort = c.resort
+			,codes_kinds = CASE
+			WHEN c.codes_kinds IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN c.codes_kinds IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN c.codes_kinds IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN c.codes_kinds IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN c.codes_kinds IN ('EVASIO') THEN 'EPREUV'
+			WHEN c.codes_kinds IN ('GARDE') THEN 'GARD'
+			ELSE c.codes_kinds END
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.kind_code IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN b.kind_code IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN b.kind_code IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN b.kind_code IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN b.kind_code IN ('EVASIO') THEN 'EPREUV'
+			WHEN b.kind_code IN ('GARDE') THEN 'GARD'
+			ELSE b.kind_code
+			END AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			ord.resort,
+			'CP' AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			) cod
+			INNER JOIN(
+			SELECT
+			count_res.resort,
+			SUM(count_res.count_resort) AS total_resort
+			FROM
+			(SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]'
+			) c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			) c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			ord.resort,
+			COUNT(ord.resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			GROUP BY resort
+			) count_res
+			GROUP BY count_res.resort
+			) res ON (res.resort = cod.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = cod.resort)
+			WHERE
+			cod.codes_kinds = 'CC'
+			GROUP BY
+			cod.resort, cod.codes_kinds, res.total_resort, eco.libelle
+
+mappingId	teaching-school-prob-private-lesson
+target		:#TeachingSchool/{nom} :/prob_school_pl {avg_code_kind}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			CAST(CAST(COUNT(cod.codes_kinds) AS INT)/CAST(res.total_resort AS NUMERIC) AS DECIMAL(10,7)) AS avg_code_kind
+			FROM
+			(SELECT
+			resort = c.resort
+			,codes_kinds = CASE
+			WHEN c.codes_kinds IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN c.codes_kinds IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN c.codes_kinds IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN c.codes_kinds IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN c.codes_kinds IN ('EVASIO') THEN 'EPREUV'
+			WHEN c.codes_kinds IN ('GARDE') THEN 'GARD'
+			ELSE c.codes_kinds END
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.kind_code IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN b.kind_code IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN b.kind_code IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN b.kind_code IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN b.kind_code IN ('EVASIO') THEN 'EPREUV'
+			WHEN b.kind_code IN ('GARDE') THEN 'GARD'
+			ELSE b.kind_code
+			END AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			ord.resort,
+			'CP' AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			) cod
+			INNER JOIN
+			(SELECT
+			count_res.resort,
+			SUM(count_res.count_resort) AS total_resort
+			FROM
+			(SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			resort VARCHAR(10) '$.resort') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			ord.resort,
+			COUNT(ord.resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			GROUP BY resort
+			) count_res
+			GROUP BY count_res.resort
+			) res ON (res.resort = cod.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = cod.resort)
+			WHERE
+			cod.codes_kinds = 'CP'
+			GROUP BY
+			cod.resort, cod.codes_kinds, res.total_resort, eco.libelle
+
+mappingId	teaching-school-prob-test-lesson
+target		:#TeachingSchool/{nom} :/prob_school_testl {avg_code_kind}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			CAST(CAST(COUNT(cod.codes_kinds) AS INT)/CAST(res.total_resort AS NUMERIC) AS DECIMAL(10,7)) AS avg_code_kind
+			FROM
+			(SELECT
+			resort = c.resort
+			,codes_kinds = CASE
+			WHEN c.codes_kinds IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN c.codes_kinds IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN c.codes_kinds IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN c.codes_kinds IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN c.codes_kinds IN ('EVASIO') THEN 'EPREUV'
+			WHEN c.codes_kinds IN ('GARDE') THEN 'GARD'
+			ELSE c.codes_kinds END
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.kind_code IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN b.kind_code IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN b.kind_code IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN b.kind_code IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN b.kind_code IN ('EVASIO') THEN 'EPREUV'
+			WHEN b.kind_code IN ('GARDE') THEN 'GARD'
+			ELSE b.kind_code
+			END AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			ord.resort,
+			'CP' AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			) cod
+			INNER JOIN(
+			SELECT
+			count_res.resort,
+			SUM(count_res.count_resort) AS total_resort
+			FROM
+			(SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			ord.resort,
+			COUNT(ord.resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			GROUP BY resort
+			) count_res
+			GROUP BY count_res.resort
+			) res ON (res.resort = cod.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = cod.resort)
+			WHERE
+			cod.codes_kinds = 'EPREUV'
+			GROUP BY
+			cod.resort, cod.codes_kinds, res.total_resort, eco.libelle
+
+mappingId	teaching-school-prob-competition
+target		:#TeachingSchool/{nom} :/prob_school_comp {avg_code_kind}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			CAST(CAST(COUNT(cod.codes_kinds) AS INT)/CAST(res.total_resort AS NUMERIC) AS DECIMAL(10,7)) AS avg_code_kind
+			FROM
+			(SELECT
+			resort = c.resort
+			,codes_kinds = CASE
+			WHEN c.codes_kinds IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN c.codes_kinds IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN c.codes_kinds IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN c.codes_kinds IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN c.codes_kinds IN ('EVASIO') THEN 'EPREUV'
+			WHEN c.codes_kinds IN ('GARDE') THEN 'GARD'
+			ELSE c.codes_kinds END
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.kind_code IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN b.kind_code IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN b.kind_code IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN b.kind_code IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN b.kind_code IN ('EVASIO') THEN 'EPREUV'
+			WHEN b.kind_code IN ('GARDE') THEN 'GARD'
+			ELSE b.kind_code
+			END AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			ord.resort,
+			'CP' AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			) cod
+			INNER JOIN(
+			/* SUM UP BY RESORTS */
+			SELECT
+			count_res.resort,
+			SUM(count_res.count_resort) AS total_resort
+			FROM
+			(SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			ord.resort,
+			COUNT(ord.resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			GROUP BY resort
+			) count_res
+			GROUP BY count_res.resort
+			) res ON (res.resort = cod.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = cod.resort)
+			WHERE
+			cod.codes_kinds = 'COMP'
+			GROUP BY
+			cod.resort, cod.codes_kinds, res.total_resort, eco.libelle
+
+mappingId	teaching-school-prob-kindergarten
+target		:#TeachingSchool/{nom} :/prob_school_kindg {avg_code_kind}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			CAST(CAST(COUNT(cod.codes_kinds) AS INT)/CAST(res.total_resort AS NUMERIC) AS DECIMAL(10,7)) AS avg_code_kind
+			FROM
+			(SELECT
+			resort = c.resort
+			,codes_kinds = CASE
+			WHEN c.codes_kinds IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN c.codes_kinds IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN c.codes_kinds IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN c.codes_kinds IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN c.codes_kinds IN ('EVASIO') THEN 'EPREUV'
+			WHEN c.codes_kinds IN ('GARDE') THEN 'GARD'
+			ELSE c.codes_kinds END
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.kind_code IN ('AD-PR','CCA','CCADOS','CCADU','CCADUL','CCAM','CCE','CCENF','CCJ','CCJOUE','CCLIM6','CCMAT','CCPP','CCRAQ','CCSKI','CCSNO','CCSURF','CL','CLMINI','CLUBEN','ENF-PI','ENF-PL','ENF-PR','G10ADU','G6ENF','G6PIOU','G6SNW','GLENF','G-PART','JARDIN','JOUJAR','MAXISK','MINCC','PIOU','SNOW','SRF-PR','VE','VIL-PL','VIL-PR','VIL-PI','G8SNW') THEN 'CC'
+			WHEN b.kind_code IN ('ASS','CARNEI','CN') THEN 'ASS'
+			WHEN b.kind_code IN ('COMPFR','COMPOR','ST','STAGE','STAJOU','STCOMP','SU','SUPER6','TOPTEN') THEN 'COMP'
+			WHEN b.kind_code IN ('CP','EN','ENG','ENGT','LP','LP-PI','LP-PL','LP-PR','LPSKI','LPSNO','LPSPEC','LPS-PR','LPsurf') THEN 'CP'
+			WHEN b.kind_code IN ('EVASIO') THEN 'EPREUV'
+			WHEN b.kind_code IN ('GARDE') THEN 'GARD'
+			ELSE b.kind_code
+			END AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			UNION ALL
+			SELECT
+			ord.resort,
+			'CP' AS kind_code
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			) cod
+			INNER JOIN(
+			SELECT
+			count_res.resort,
+			SUM(count_res.count_resort) AS total_resort
+			FROM
+			(SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,codes_kinds VARCHAR(100) '$.codes.kinds[0]') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.codes_kinds != 'NULL'
+			AND c.codes_kinds NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			COUNT(resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL' AND b.kind_code != 'NULL'
+			AND b.kind_code NOT IN('ANNUL','CASKI','G-PRES','NURS','PRESTI','SKIFUN','SNO')
+			GROUP BY resort
+			UNION ALL
+			SELECT
+			ord.resort,
+			COUNT(ord.resort) AS count_resort
+			FROM
+			[EsfVEL].[dbo].[orders-esf-custom-csv] cust
+			INNER JOIN [EsfVEL].[dbo].[orders-csv] ord ON (ord.order_id = cust.order_id)
+			WHERE
+			ord.order_id != 'NULL' AND ord.esf_custom = '1' AND ord.resort != 'NULL' AND ord.status IN('paid','paid_integrator','paid_intermediary')
+			GROUP BY resort
+			) count_res
+			GROUP BY count_res.resort
+			) res ON (res.resort = cod.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = cod.resort)
+			WHERE
+			cod.codes_kinds = 'GARD'
+			GROUP BY
+			cod.resort, cod.codes_kinds, res.total_resort, eco.libelle
+
+mappingId	teaching-school-prob-insurance
+target		:#TeachingSchool/{nom} :/prob_school_insurance {avg_assu}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			assu.avg_assu
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.assu AS NUMERIC))/COUNT(ord.resort) AS avg_assu
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) assu
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = assu.resort)
+			WHERE
+			assu.avg_assu > 0
+
+mappingId	teaching-school-prob-ffs
+target		:#TeachingSchool/{nom} :/prob_school_ffs {avg_ffs}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			ffs.avg_ffs
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.ffs AS NUMERIC))/COUNT(ord.resort) AS avg_ffs
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) ffs
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = ffs.resort)
+			WHERE
+			ffs.avg_ffs > 0
+
+mappingId	teaching-school-prob-hotel
+target		:#TeachingSchool/{nom} :/prob_school_hotel {avg_hotel}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			avg_hotel
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.hotel AS NUMERIC))/COUNT(ord.resort) AS avg_hotel
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) hot
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = hot.resort)
+			WHERE
+			hot.avg_hotel > 0
+
+mappingId	teaching-school-prob-lift
+target		:#TeachingSchool/{nom} :/prob_school_lift {avg_lift}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			lift.avg_lift
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.lift AS NUMERIC))/COUNT(ord.resort) AS avg_lift
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) lift
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = lift.resort)
+			WHERE
+			lift.avg_lift > 0
+
+mappingId	teaching-school-prob-skiRental
+target		:#TeachingSchool/{nom} :/prob_school_skiRental {avg_ski_rental}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			skiR.avg_ski_rental
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.ski_rental AS NUMERIC))/COUNT(ord.resort) AS avg_ski_rental
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) skiR
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = skiR.resort)
+			WHERE
+			skiR.avg_ski_rental > 0
+
+mappingId	teaching-school-prob-transfer
+target		:#TeachingSchool/{nom} :/prob_school_transfer {avg_transfer}^^xsd:decimal . 
+source		SELECT
+			eco.libelle AS nom,
+			trans.avg_transfer
+			FROM
+			(SELECT
+			ord.resort AS resort,
+			res.libelle AS name_resort,
+			COUNT(ord.resort) AS count_resort,
+			SUM(TRY_CAST(ord.transfer AS NUMERIC))/COUNT(ord.resort) AS avg_transfer
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			GROUP BY
+			ord.resort, res.libelle) trans
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = trans.resort)
+			WHERE
+			trans.avg_transfer > 0
+
+mappingId	avg-discipline-teachingSchool
+target		:#TeachingSchoolDisciplineAvgR/{idSchoolDisciplineAvg} a :/TeachingSchoolDisciplineAvgR ; :/tsRelated_disciplineAvg :#Discipline/{discipline_label} ; :/ts_discipline_avg {avg_discipline}^^xsd:decimal . :#TeachingSchool/{nom} :/ts_has_disciplineAvg :#TeachingSchoolDisciplineAvgR/{idSchoolDisciplineAvg} . 
+source		SELECT
+			eco.libelle AS nom,
+			final1.discipline_label,
+			eco.libelle + '_' + final1.discipline_label AS idSchoolDisciplineAvg,
+			CAST(CAST(final1.count_discipline AS NUMERIC)/CAST(final2.total_resort AS NUMERIC) AS DECIMAL(5,4)) AS avg_discipline
+			FROM
+			(SELECT
+			out1.resort,
+			out1.discipline_label,
+			SUM(out1.count_discipline) AS count_discipline
+			FROM (
+			SELECT
+			ord.resort AS resort,
+			CASE
+			WHEN esf_custom.discipline_label IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN esf_custom.discipline_code = 'BIAT' THEN 'BIATHLON'
+			WHEN esf_custom.discipline_label IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU') THEN 'CLUB PIOU PIOU'
+			WHEN esf_custom.discipline_label IN ('Compétition','Ski Alpin Compétition') THEN 'COMPETITION'
+			WHEN esf_custom.discipline_label IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO') THEN 'FREE STYLE'
+			WHEN esf_custom.discipline_label IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN esf_custom.discipline_label IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL') THEN 'HANDISKI'
+			WHEN esf_custom.discipline_label IN ('Garden','Jardin','JARDIN ENFANT ALPIN') OR esf_custom.discipline_code IN ('JARD','JDN') THEN 'KINDERGARTEN'
+			WHEN esf_custom.discipline_label IN ('SKI NORDIQUE SKATING') THEN 'NORDIC SKATE'
+			WHEN esf_custom.discipline_label IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE') OR esf_custom.discipline_code IN ('NORDIQUE','NORD') THEN 'NORDIC SKI'
+			WHEN esf_custom.discipline_label IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE') THEN 'OFF PISTE'
+			WHEN esf_custom.discipline_label IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE') THEN 'RANDONEE'
+			WHEN esf_custom.discipline_label IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating' ) THEN 'SKATE DE FOND'
+			WHEN esf_custom.discipline_label IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant') OR esf_custom.discipline_code IN ('ALP','ALPIN','SKI-ALPIN') THEN 'SKI ALPIN'
+			WHEN esf_custom.discipline_label IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING') THEN 'SKI DE FOND'
+			WHEN esf_custom.discipline_label IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN esf_custom.discipline_label IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf')  OR esf_custom.discipline_code IN ('SKA','SKATING','SNO','SNOW','SNOWBOARD') THEN 'SNOWBOARD'
+			WHEN esf_custom.discipline_label IN ('Télémark') THEN 'TELEMARK'
+			ELSE esf_custom.discipline_label
+			END AS discipline_label,
+			COUNT(esf_custom.discipline_code) AS count_discipline
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			LEFT JOIN (SELECT
+			id = b.Id,
+			orderID = b.order_id,
+			price = b.price,
+			merchant = b.merchant
+			,fromDate = c.fromDate
+			,discipline_code = c.discipline_code
+			,discipline_label = c.discipline_label
+			,levelLesson = c.levelLesson
+			,levelName = c.levelName
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(fromDate VARCHAR(10) '$.from'
+			,discipline_code VARCHAR(100) '$.activity.code'
+			,discipline_label VARCHAR(100) '$.activity.label'
+			,levelLesson VARCHAR(100) '$.pax[0].level'
+			,levelName VARCHAR(100) '$.pax[0].levelName'
+			) c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			) esf_custom ON (CAST(esf_custom.orderID AS VARCHAR(100)) = ord.order_id)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			AND ord.esf_custom = '1'
+			AND esf_custom.discipline_code NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins','NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER')
+			GROUP BY
+			ord.resort, res.libelle, esf_custom.discipline_label
+			, esf_custom.discipline_code
+			UNION ALL
+			SELECT
+			esf_custom.resort,
+			esf_custom.discipline_label,
+			COUNT(esf_custom.resort) AS count_discipline
+			FROM
+			(SELECT
+			resort,
+			CASE   WHEN discipline IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN discipline IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN discipline IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN discipline IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN discipline IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN discipline IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN discipline IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN discipline IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN discipline IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN discipline IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN discipline IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN discipline IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN discipline IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN discipline IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN discipline IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN discipline IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN discipline IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN discipline IN ('Télémark') THEN 'TELEMARK'
+			ELSE discipline
+			END AS discipline_label
+			FROM
+			(SELECT
+			resort = c.resort
+			,discipline = c.discipline
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,discipline VARCHAR(100) '$.product.activity') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.discipline != 'NULL' AND c.discipline != ''
+			AND c.discipline NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP')
+			) insc1
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE   WHEN b.activity IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN b.activity IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN b.activity IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN b.activity IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN b.activity IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN b.activity IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN b.activity IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN b.activity IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN b.activity IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN b.activity IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN b.activity IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN b.activity IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN b.activity IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN b.activity IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN b.activity IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN b.activity IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN b.activity IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN b.activity IN ('Télémark') THEN 'TELEMARK'
+			ELSE b.activity
+			END AS discipline_label
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL'
+			AND b.activity NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP','TEAM PERFORMANCE')
+			) esf_custom
+			GROUP BY
+			esf_custom.resort, esf_custom.discipline_label
+			) out1
+			GROUP BY
+			OUT1.resort,
+			OUT1.discipline_label
+			) final1
+			INNER JOIN (SELECT
+			out2.resort,
+			SUM(out2.count_discipline) AS total_resort
+			FROM (SELECT
+			ord.resort AS resort,
+			CASE
+			WHEN esf_custom.discipline_label IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN esf_custom.discipline_code = 'BIAT' THEN 'BIATHLON'
+			WHEN esf_custom.discipline_label IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU') THEN 'CLUB PIOU PIOU'
+			WHEN esf_custom.discipline_label IN ('Compétition','Ski Alpin Compétition') THEN 'COMPETITION'
+			WHEN esf_custom.discipline_label IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO') THEN 'FREE STYLE'
+			WHEN esf_custom.discipline_label IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN esf_custom.discipline_label IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL') THEN 'HANDISKI'
+			WHEN esf_custom.discipline_label IN ('Garden','Jardin','JARDIN ENFANT ALPIN') OR esf_custom.discipline_code IN ('JARD','JDN') THEN 'KINDERGARTEN'
+			WHEN esf_custom.discipline_label IN ('SKI NORDIQUE SKATING') THEN 'NORDIC SKATE'
+			WHEN esf_custom.discipline_label IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE') OR esf_custom.discipline_code IN ('NORDIQUE','NORD') THEN 'NORDIC SKI'
+			WHEN esf_custom.discipline_label IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE') THEN 'OFF PISTE'
+			WHEN esf_custom.discipline_label IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE') THEN 'RANDONEE'
+			WHEN esf_custom.discipline_label IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating' ) THEN 'SKATE DE FOND'
+			WHEN esf_custom.discipline_label IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant') OR esf_custom.discipline_code IN ('ALP','ALPIN','SKI-ALPIN') THEN 'SKI ALPIN'
+			WHEN esf_custom.discipline_label IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING') THEN 'SKI DE FOND'
+			WHEN esf_custom.discipline_label IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN esf_custom.discipline_label IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf')  OR esf_custom.discipline_code IN ('SKA','SKATING','SNO','SNOW','SNOWBOARD') THEN 'SNOWBOARD'
+			WHEN esf_custom.discipline_label IN ('Télémark') THEN 'TELEMARK'
+			ELSE esf_custom.discipline_label
+			END AS discipline_label,
+			COUNT(esf_custom.discipline_code) AS count_discipline
+			FROM
+			[EsfVEL].[dbo].[orders-csv] ord
+			LEFT JOIN [EsfVEL].[dbo].[resorts] res ON (res.id = ord.resort)
+			LEFT JOIN (SELECT
+			id = b.Id,
+			orderID = b.order_id,
+			price = b.price,
+			merchant = b.merchant
+			,fromDate = c.fromDate
+			,discipline_code = c.discipline_code
+			,discipline_label = c.discipline_label
+			,levelLesson = c.levelLesson
+			,levelName = c.levelName
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(fromDate VARCHAR(10) '$.from'
+			,discipline_code VARCHAR(100) '$.activity.code'
+			,discipline_label VARCHAR(100) '$.activity.label'
+			,levelLesson VARCHAR(100) '$.pax[0].level'
+			,levelName VARCHAR(100) '$.pax[0].levelName') c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			) esf_custom ON (CAST(esf_custom.orderID AS VARCHAR(100)) = ord.order_id)
+			WHERE
+			ord.status IN('paid','paid_integrator','paid_intermediary')
+			AND ord.resort != 'NULL'
+			AND ord.order_id != 'NULL'
+			AND ord.esf_custom = '1'
+			AND esf_custom.discipline_code NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins','NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER')
+			GROUP BY
+			ord.resort, res.libelle, esf_custom.discipline_label
+			, esf_custom.discipline_code
+			UNION ALL
+			SELECT
+			esf_custom.resort,
+			esf_custom.discipline_label,
+			COUNT(esf_custom.resort) AS count_discipline
+			FROM
+			(SELECT
+			resort,
+			CASE
+			WHEN discipline IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN discipline IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN discipline IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN discipline IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN discipline IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN discipline IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN discipline IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN discipline IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN discipline IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN discipline IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN discipline IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN discipline IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN discipline IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN discipline IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN discipline IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN discipline IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN discipline IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN discipline IN ('Télémark') THEN 'TELEMARK'
+			ELSE discipline
+			END AS discipline_label
+			FROM
+			(SELECT
+			resort = c.resort
+			,discipline = c.discipline
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscriptions) WITH
+			(resort VARCHAR(10) '$.resort'
+			,discipline VARCHAR(100) '$.product.activity') c
+			WHERE
+			b.inscriptions != 'NULL' AND c.resort != 'NULL' AND c.discipline != 'NULL' AND c.discipline != ''
+			AND c.discipline NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP')
+			) insc1
+			UNION ALL
+			SELECT
+			resort = c.resort,
+			CASE
+			WHEN b.activity IN ('BABYSKI','BABYSKIER','BABY-SKIER','BEBE SKIEUR','BABYSKIEUR','BABYSNOW') THEN 'BABY SKI'
+			WHEN b.activity IN ('BIAT','Apr+¿s-Midi FUN Biathlon','Biathlon +á 10m plomb','BIATHLON 10 M','BIATHLON 22 LR','BIATHLON 50 M','BIATHLON CLASSIC','Biathlon Laser','BIATHLON PLOMB','BIATHLON SKATING','Initiation Biathlon','WEEK END BIATHLON','WEEK-END BIATHLON') THEN 'BIATHLON'
+			WHEN b.activity IN ('Club Pioupiou','PIOU PIOU','PIOU PIOU CLUB','CLUB PIOUPIOU','CLUB PIOU-PIOU',' PIOU PIOU ET OURSON','"P''tits BOUTS de GLISSE"','ALPIN PIOU-PIOU','Alpine Skiing Children','Beginner/Child','CHILDREN SNOWBOARD LESSON','Club PIOU PIOU - JARDIN d''ENFANTS','CLUB PIOU PIOU NORDIC','CLUB PIOU PIOU SNOW GARDEN','Club Pioupiou (Nounours + Ourson et Flocon)','Club PiouPiou (Pioupiou et Garolou)','D+¬butant enfant ','Espace piou-piou 3-4 ans','Espace piou-piou 4-6 ans','Grand cours priv+¬ ski d+¬butant de 7 +á 12 ans','JARDIN DES PIOU-PIOU','Jardin des Piou-piou le week-end','KINDERGARDEN PIOU PIOU','MINI CLUB DES PIOU PIOU','piou mixte','PIOU PIOU AND OURSON','PIOU PIOU ET OURSON','PIOU PIOU MINI CLUB','PIOU-PIOU ALPIN','PIOUPIOU''S GARDEN','Snow garden "Club Piou Piou"') THEN 'CLUB PIOU PIOU'
+			WHEN b.activity IN ('Compétition','Ski Alpin Compétition','ALPINE COMPETITION COURSE','comp+¬tition tuition','COMPETITION COURSE','Competition Courses','COMPETITION JUNIOR','OLYMPIADES','Ski Alpin Comp+¬tition','SKI ALPIN STAGE COMPETITION','SKI COMPETITION','Stage comp+¬tition','Stage comp+¬tition Ski Fr+¬quence - +Ç partir de 8 ans et du niveau +¬toile d''or ou fl+¬chette ou cl','Stage comp+¬tition Ski Fr+¬quence - Adultes, ados et enfants +á partir de 7 ans (autonomes) et du ni','Stages Comp+¬tition','Modern'' Comp+¬tition') THEN 'COMPETITION'
+			WHEN b.activity IN ('freestyle','FREERIDE','Hors-Piste et Freeride','FREESKI','FREESTYLE SKI','Freestyle Ski','FREESTYLE SNOW','Freestyle Snow','FREESTYLE','Freeride - Freestyle','FREESTYLE','Freestyle Ski','FREESTYLE SKI','FREESTYLE SKIING','FREESTYLE SNOW','FREESTYLE SNOWBOARD','FREESTYLE','FREESTYLE BOARDING','FREESTYLE SNOWBOARD','Freeride Ski','SKI FREESTYLE','FREESTYLE SKI','FREESTYLE SNO','Free Ride','FREE SKI','FREE SKI Sp+¬cial Ado','Free style skiing','FREE-SKI','''FREESKI'' COURSE','FREESTYLE COURSE','FREESTYLE MOTION FREESTYLE CAMP SKI','FREESTYLE MOTION FREESTYLE CAMP SNOWBOARD','FREESTYLE MOTION TEAM RIDER','Ski Free style','Stage Free Ski','STAGE FREESKI','STAGE FREESTYLE') THEN 'FREE STYLE'
+			WHEN b.activity IN ('Guide Accompagnateur Montagne','Off piste Guide') THEN 'GUIDE'
+			WHEN b.activity IN ('Fauteuil ski','Handi ski','Fauteuil ski','FAUTEUIL SKI','HANDISKI AUTONOME','HANDISKI  DUALSKI','HANDI SKI','HANDISKI TANDEMSKI','HANDISKI TANDEM','HANDY','HANDICAPE FAUTEUIL','HANDICAPE MENTAL','HANDICAPE PHYSIQUE','HANDICAPE SENSORIEL','FAUTEUIL','Ski Handicap') THEN 'HANDISKI'
+			WHEN b.activity IN ('Garden','Jardin','JARDIN ENFANT ALPIN','Children Club and kindergarden','GARDEN OF CHILDREN','Garden skiing','Garderie','JARDIN  ENFANT','JARDIN ALPIN','JARDIN ALPINE SKIING','JARDIN D ENFANTS','JARDIN D''ENFANT','JARDIN D''ENFANTS','Jardin des Neiges','JARDIN ENFANT','JARDIN FOND','JARDIN OURSON','JARDIN SKI ALPIN','JARDON DES NEIGES','KINDERGARDEN OURSON','Kindergarden','Repas + Garderie','Repas et Garderie Enfant','Ski garden') THEN 'KINDERGARTEN'
+			WHEN b.activity IN ('SKI NORDIQUE SKATING','NORDIC SKATE') THEN 'NORDIC SKATE'
+			WHEN b.activity IN ('NORDIC CLASSIC','NORDIQUE CLASSIQUE','NORDIC SKIING','NORDIQUE','SKI NORDIQUE','NORDIC SKIING','SKI NORDIQUE CLASSIC','SKATING NORDIC SKIING','CROSS COUNTRY SKIING','SKI NORDIQUE','NORDIQUE CLASSIQUE','CROSS COUNTRY SKI','SKI NORDIQUE','Nordique classique','NORDIC SKIING CLASSIC','SKI NORDIQUE CLASSIQUE','SKI NORDIQUE SKATING','SKATING','SKATING NORDIQUE','SKI NORDIQUE SKATING','SKI NORDIQUE','ski Nordique','SKI NORDIQUE CLASSIQUE','Activit+¬s nordic','Aventure Nordique','CLASSIQUE NORDIQUE','D''CLIC NORDIC','SKI NORD') THEN 'NORDIC SKI'
+			WHEN b.activity IN ('HORS PISTE PACK RIDE','OFF PISTE SKIING PACK RIDE','Off-piste','HORS PISTE','HORS PISTE SKI','HORS-PISTE','HORS PISTE SKI','Hors piste','HORS PISTES SKI VAL THO','HORS PISTES SKI 3V','Hors-Piste','SKI HORS PISTE','OFF PISTE INTRODUCTION','Off piste skiing','OFF PISTE TO LE MONAL','Off piste with guide') THEN 'OFF PISTE'
+			WHEN b.activity IN ('SKI DE RANDO','sortie en famille ou entre amis','MARCHE NORDIQUE','NEIGE ET MONTAGNE RIDE','Ski de randonnée','Ski touring','Backcountry Skiing','Rando','RANDONNEE A SKI','Randonnée ski','Randonnées','SKI DE RANDO','SKI DE RANDONEE','SKI DE RANDONNEE','SKI TOURING','TOURING SKIING','RANDONNEE PACK TRACE','SKI TOURING PACK TRACE','SKI DE RANDONNEE','SKI TOURING','Rando / Raquettes','SNOWSHOEING','RAQUETTE','RAQUETTES','SNOWSHOES WALK','SORTIE RAQUETTES','Balade en Raquette','SNOWSHOEING','SNOWSHOES','RANDONNEE RAQUETTES','ski touring' ,'RANDONNÉE DE SKI','SKI DE RANDONNEE' ,'SKI RANDONNE','RANDO BACKCOUNTRY','Rando / Raquettes / Marche nordique','RANDO_PACK_TRACE','Randonn+¬e','Randonn+¬e Alpine','Randonn+¬es','Randonn+¬es en Raquettes','RANDONNEE RAQUETTE','RANDONNEE RAQUETTE ET LUGE','RANDONNEE RAQUETTE NOCTURNE','RANDO-RAQUETTES','RAQUETTES APRES MIDI 1600','Ski de randonn+¬e','SKI DE RANDONN+ëE','SKI DE RANDONN+ëE ALPIN','SKI DE RANDONNEE NORDIQUE','SORTIES RAQUETTES') THEN 'RANDONEE'
+			WHEN b.activity IN ('Ski de Fond Skating','Ski de Fond Skating','FOND SKATING','SKI DE FOND SKATING','FOND SKATING','Ski de Fond - Skating','SKATE') THEN 'SKATE DE FOND'
+			WHEN b.activity IN ('ALPIN','Ski alpin','ALPINE SKI','Alpine Skiing','SKI ALPIIN','ALPINE SKIING','ALPING SKIING','Alpin Ski','ALPIN SKIING','ALPINE SKI','Adults Alpin Skiing','Ski Alpin Adultes','Ski Alpin Enfant','1.Ski Alpin','Ado. Ski Alpin','Adultes Ski Alpin','Alpine Skiing Adults','Club Med Alpine Ski','Club Med Ski Alpin','Cours Collectifs Ski Alpin','SKI APLIN','SKIALPIN','Team Rider  Ski Alpin') THEN 'SKI ALPIN'
+			WHEN b.activity IN ('SKI DE FOND - CLASSIQUE ALTERNATIF','Cross Country Ski','CROSS COUNTRY SKIING','CROSS-COUNTRY SKIING','CROSS-COUNTRY SKIING (Classic style)','SKI DE FOND CLASSIC','Ski de Fond Classique','Ski de fond alternatif','FOND','Ski de Fond - Classique','Initiation Ski de Fond','SKI DE FOND - SKATING','Cours Collectifs Ski de fond','FOND CLASSIQUE') THEN 'SKI DE FOND'
+			WHEN b.activity IN ('Snowscoot') THEN 'SNOW SCOOT'
+			WHEN b.activity IN ('SNOWBOARD','SKATING','SKATING CROSS COUNTRY','SNOW BOARD','Snowboarding','SNOWBOARDING','SNOWBOARD FREERIDE','SNOW FREESTYLE','Surf',' Snowboard ','2.Snowboard','ADULT SNOWBOARD LESSON','Club Med Snowboard','Cours Collectifs Snowboard','Cours de Snowboard','Cross country','FREERIDE SNOWBOARD','Le grand cours priv+¬ snow limit+¬ +á 5 snowboarder','SNOWBOARD  ENFANTS','SNOWBOARD ADULTES','Snowboard Group lessons','Snowboarding course','SNWOBOARD','Stage de  snowboard','TEAM RIDER SNOWBOARD','TEAM RIDER SNOWBOARDING') THEN 'SNOWBOARD'
+			WHEN b.activity IN ('Télémark') THEN 'TELEMARK'
+			ELSE b.activity
+			END AS discipline_label
+			FROM
+			[EsfVEL].[dbo].[orders-esf-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(resort VARCHAR(10) '$.resort'
+			,product_name VARCHAR(100) '$.product.structure[0].name'
+			,product_kind VARCHAR(100) '$.product.kind') c
+			WHERE
+			b.inscription != 'NULL' AND c.resort != 'NULL'
+			AND b.activity NOT IN ('Assurance Carré Neige','NULL','Bambino','Cours collectif','Group lesson','CHALET DES ENFANTS','CHILDREN''S CHALET','classic','p''tits poussins'
+			,'NULL','SKI','SLALOM','TANDEM','TAXISKI','TEAM RIDER','TEAMRIDER','YOONER','ASSURANCE','Assurance Carr+¬ neige','Assurance Carr+¬ neige Annulation'
+			,'Assurance Carr+¬ Neige Int+¬gral','Assurance Carr+¬ Neige Int+¬gral Insurance','assurance carr+¬ neige integral','Assurance Carre Neige avec ou sans annulation'
+			,'ASSURANCE EGLOO','Carr+¬ Neige Int+¬gral','CARRE NEIGE','Chasse HARIBO','EGLOO INSURANCE','Insurance Carre neige with cancellation','Meal + Daycare','Navette','NURSERIE'
+			,'Nursery','PACK SECURITE','RIFLE SHOOTING','S+¬curit+¬ - DVA','Sans','SECURITE','Shuttle','sifflote','SIFFLOTTE','SIFFLOTTE.','SMS','TIR +á le carabine laser'
+			,'TIR A LA CARABINE','YOGA','ZAPPING','3.Maison des Enfants-Club Enfant','ACTIVITES LUDIQUES','ACTIVITES NEIGES','Ados Team rider','ADOSKIS''COOL','ADO-TEAM-RIDER'
+			,'ADVANCED TRAINING','AIRBOARD','AUTRE DISCIPLINE','BACK-COUNTRY SKIING','Beginner/Junior ','Boule de Neige','CLASSIC CROSSCOUNTRY','Classique','Club ESF','CONSTRUCTION IGLOO'
+			,'Cours "Super 8"','Cours Marmottons','Cours Priv+¬s Partag+¬s','CRECHE','D+¬butant Junior ','Day care centre','DESCENTE AUX FLAMBEAUX','Down hill skiing','DVA INITIATION'
+			,'ECOLE DES NEIGES','ESCAPE GAME','ESF Academy','Esprit Club','FORFAIT PIETON 6 JOURS - ROSAY','GROUPE ELITE','GUIDE','Hors piste avec Guide','Hors piste guides','IGLOO'
+			,'INITIATION HORS-PISTE','Kid''s Club','Kids'' Club','Le Club','Le Club ESF','Le grand cours priv+¬ limit+¬ +á 5 personnes','Les Touts Petits','little chicks','Little ones'
+			,'Marmotte','Marmottons lessons','Mini Champion Courses','MINI RIDER SNOW','MINITRAPPEUR','Modern'' Stages','Modern''Stages','Modern''Stages training','MONET-RIDER','MULTI ACTIVITE'
+			,'MULTI ACTIVITES','MULTI-ACTIVIT+ëS','MULTIACTIVITE','MULTI-ACTIVITE ENF-1-3-JOURS','NATURAL CAMP','Neiges & Montagne RIDE Freerando','Neiges & Montagne RIDE Ski'
+			,'Neiges & Montagne TRACE Ski de Rando','Neiges & Montagne TRACE Splitboard','PERFECTIONNEMENT','PERFORMANCE COURSE','PETITOU','PLATINE','PRIVILEGE 8','PTITES SPATULES','PTITRIDER'
+			,'P''tits BOUTS de GLISSE','PTITS TRAPPEURS','SKI ADO - TEAM RIDER','SKI CLASSIC','Ski course with lunch','SKI TEAM RIDER','SKIING','SLALOM COURSE','SNAKE GLISS','SNAKE GLISSE'
+			,'SNAKE-GLISSE','SNOW','SNOW COURS SUPER 8','SNOW GARDEN','SNOW SCOOT','SNOWGARDEN','SNOWSHOE','Snow-shoes','SORTIE HORS-PISTE MONAL','STAGE ADOS SKI''S COOL','Stage Mini-Champion'
+			,'STAGE MULTI ACTIVIT+ëS','Stage multi-activit+¬','STAGE PERFORMANCE','Stage Team Rider','Stage Top 6','Stage TOP6','STAGES','Stages avec repas','STAGES SLALOM'
+			,'Super 5 d+¬butant de 7 +á 12 ans','''Super 8'' lessons','Super-5','Super-5 snow limit+¬ +á 5 snowboarder','SUPERKIDS','Supervised lunch','TEAM CHAMPION','TEAM ETOILE','TEAM RIDER COURSE'
+			,'TEAM RIDER SKI','TEAM RIDER SKIING','TEAM_RIDER','TEAM-RIDER','TEAM-RIDER SKI','TEAM-RIDER-SKI','TEEN SKI - TEAM RIDER','TEENAGERS SKI COURSE','TEENS TRIP','Teknski','TITS POUSSINS'
+			,'Top 6 Courses','TOUTES NEIGES TOUT TERRAIN','trapper','trappeur','TRIP ADO ','VISITE DES TUFFES','WINTER & SUMMER GAMES','WINTER GAMES','WINTERCAMP','TEAM PERFORMANCE')
+			) esf_custom
+			GROUP BY
+			esf_custom.resort, esf_custom.discipline_label
+			) out2
+			GROUP BY
+			out2.resort
+			) final2 ON (final2.resort = final1.resort)
+			INNER JOIN [EsfVEL].[dbo].[resorts] eco ON (eco.id = final1.resort)
+
+mappingId	service-instances
+target		:#Service/{serviceInstance} a :#Service . 
+source		SELECT DISTINCT
+			CASE c.serviceAlt
+			WHEN 'CC' THEN 'Group Lesson'
+			WHEN 'CP' THEN 'Private Lesson'
+			WHEN 'EPREUV' THEN 'Test Lesson'
+			WHEN 'GARDE' THEN 'Kindergarten'
+			END AS serviceInstance
+			FROM [EsfVEL].[dbo].[orders-csv] ord
+			INNER JOIN [EsfVEL].[dbo].[orders-esf-csv] ordEsf ON (ordEsf.order_id = ord.order_id)
+			CROSS APPLY OPENJSON (ordEsf.inscriptions) WITH
+			(
+			serviceDesc VARCHAR(100) '$.product.name'
+			,serviceN VARCHAR(100) '$.product.kind'
+			,serviceCode VARCHAR(100) '$.product.structure[0].code'
+			,serviceAlt VARCHAR(100) '$.codes.kinds[0]'
+			) c
+			WHERE ord.stay_from != 'NULL' AND CAST(ord.stay_from AS DATE) >= CONVERT(VARCHAR,'01/01/2022',101) AND ord.status = 'paid'
+
+mappingId	student-instances+name+birthday
+target		:#Student/{student_id} a :#Student ; :#student_name {studentName}^^xsd:string ; :#student_birthday {birthdate}^^xsd:dateTime . 
+source		SELECT
+			row_number() OVER (ORDER BY studentName , birthdate) as student_id,
+			studentName,
+			birthdate
+			FROM
+			(SELECT DISTINCT
+			TRIM(c.lastname) + ', ' + TRIM(c.firstname) AS studentName,
+			birthdate = c.birthdate
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			firstname VARCHAR(100) '$.pax[0].firstname'
+			,lastname VARCHAR(100) '$.pax[0].lastname'
+			,birthdate VARCHAR(10) '$.pax[0].birthdate'
+			) c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			AND (firstName != 'NULL' AND firstName != '--' AND firstName != '-' AND firstName != '.' AND lastname != 'NULL' AND lastname != '--' AND lastname != '-' AND lastname != '.' AND lastname != '?' AND lastname != '???????')
+			) main
+
+mappingId	student-learns_in_language
+target		:#Student/{studentName} :/learns_in_language :#TeachingLanguage/{languageName} . 
+source		SELECT DISTINCT
+			TRIM(c.lastname) + ', ' + TRIM(c.firstname) AS studentName,
+			CASE c.languageName
+			WHEN 'Allemand' THEN 'German'
+			WHEN 'Anglais' THEN 'English'
+			WHEN 'Chinois' THEN 'Chinese'
+			WHEN 'Espagnol' THEN 'Spanish'
+			WHEN 'Français' THEN 'French'
+			WHEN 'Italien' THEN 'Italian'
+			WHEN 'Néerlandais' THEN 'Dutch'
+			WHEN 'Polonais' THEN 'Polish'
+			WHEN 'Portugais' THEN 'Portuguese'
+			WHEN 'Russe' THEN 'Russian'
+			ELSE c.languageName
+			END AS languageName
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			firstname VARCHAR(100) '$.pax[0].firstname'
+			,birthdate VARCHAR(10) '$.pax[0].birthdate'
+			,lastname VARCHAR(100) '$.pax[0].lastname'
+			,levelLesson VARCHAR(100) '$.pax[0].level'
+			,levelName VARCHAR(100) '$.pax[0].levelName'
+			,languageName VARCHAR(50) '$.lang.label'
+			,meetingPoint VARCHAR(100) '$.meetingPoint.label'
+			,activity VARCHAR(100) '$.activity.label'
+			,fromDate VARCHAR(50) '$.from'
+			,toIncluded VARCHAR(50) '$.toIncluded'
+			,customRequest VARCHAR(1000) '$.customRequest'
+			) c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			AND (firstName != 'NULL' AND firstName != '--' AND firstName != '-' AND firstName != '.' AND lastname != 'NULL' AND lastname != '--' AND lastname != '-' AND lastname != '.' AND lastname != '?' AND lastname != '???????')
+
+mappingId	student-learned_level
+target		:#Student/{studentName} :#learned_level :#TeachingLevel/{levelLesson} . 
+source		SELECT DISTINCT
+			TRIM(c.lastname) + ', ' + TRIM(c.firstname) AS studentName,
+			levelLesson = c.levelLesson
+			FROM [EsfVEL].[dbo].[orders-esf-custom-csv] b
+			CROSS APPLY OPENJSON (b.inscription) WITH
+			(
+			firstname VARCHAR(100) '$.pax[0].firstname'
+			,birthdate VARCHAR(10) '$.pax[0].birthdate'
+			,lastname VARCHAR(100) '$.pax[0].lastname'
+			,levelLesson VARCHAR(100) '$.pax[0].level'
+			,levelName VARCHAR(100) '$.pax[0].levelName'
+			,languageName VARCHAR(50) '$.lang.label'
+			,meetingPoint VARCHAR(100) '$.meetingPoint.label'
+			,activity VARCHAR(100) '$.activity.label'
+			,fromDate VARCHAR(50) '$.from'
+			,toIncluded VARCHAR(50) '$.toIncluded'
+			,customRequest VARCHAR(1000) '$.customRequest'
+			) c
+			WHERE CAST(b.order_id AS VARCHAR(100)) != 'NULL'
+			AND (firstName != 'NULL' AND firstName != '--' AND firstName != '-' AND firstName != '.' AND lastname != 'NULL' AND lastname != '--' AND lastname != '-' AND lastname != '.' AND lastname != '?' AND lastname != '???????')
+			AND c.levelLesson != 'NULL'
+]]
+
