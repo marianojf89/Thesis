@@ -89,11 +89,24 @@ class ShapeIntegration():
                         if p1 in self.propertyPathNS and o1 == pathValueIRI:
                             insertTriple = True
                             updatedIRM.add((s1,self.shaclNS.group,URIRef(groupIdIRI)))
-                            updatedIRM.add((URIRef(groupIdIRI), self.rdfSyntax.type, self.rdfSyntax.PropertyGroup))
+                            updatedIRM.add((URIRef(groupIdIRI), self.rdfSyntax.type, self.shaclNS.PropertyGroup))
                             updatedIRM.add((URIRef(nodeShapeIrmIRI),self.shaclNS["property"],s1))
-                        if insertTriple == True:
-                            for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
-                                updatedIRM.add((s2,p2,o2))
+                if insertTriple == True:
+                    for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
+                        if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
+                            updatedIRM.add((s2,p2,o2))
+                        elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
+                            # Get the content of the RDF lists that contain the values of sh:in
+                            inputRDFlist = self.getElementsOfRDFlist(self.inputShapes, o2)
+                            values = sorted(inputRDFlist)
+                            list_node = self.createRDFListFromList(values, updatedIRM)
+                            updatedIRM.add((s2, p2, list_node))
+                        elif p2 == self.shaclNS['or']:
+                            # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
+                            inputRDFlist = self.getElementsOfRDFlistOr(self.inputShapes, o2) 
+                            list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
+                            updatedIRM.add((s2, p2, list_node_superShapeOr))
+                    break
 
             
     # This function receives two shape graphs, one that is part of the integration (IRM) and another that is the outcome, and a list of compound shapes [[nodeShapeIRI, targetIRI, pathValueIRI]] which don't have an equivalence. Furthermore, the objective is to insert these in the updated version of the IRM.
@@ -101,6 +114,7 @@ class ShapeIntegration():
         for inputShape in targetsWithoutEq:
             nodeShapeIRI = inputShape[0]
             pathValueIRI = inputShape[2]
+            insertTriple = False
             for s, p, o in shapeGraph.triples((nodeShapeIRI, None, None)):
                 if p != self.shaclNS["property"]:
                     updatedIRM.add((s,p,o))
@@ -109,9 +123,22 @@ class ShapeIntegration():
                         if p1 in self.propertyPathNS and o1 == pathValueIRI:
                             insertTriple = True
                             updatedIRM.add((nodeShapeIRI,self.shaclNS["property"],s1))
-                        if insertTriple == True:
-                            for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
-                                updatedIRM.add((s2,p2,o2))
+                if insertTriple == True:
+                    for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
+                        if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
+                            updatedIRM.add((s2,p2,o2))
+                        elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
+                            # Get the content of the RDF lists that contain the values of sh:in
+                            inputRDFlist = self.getElementsOfRDFlist(self.SHACL, o2)
+                            values = sorted(inputRDFlist)
+                            list_node = self.createRDFListFromList(values, updatedIRM)
+                            updatedIRM.add((s2, p2, list_node))
+                        elif p2 == self.shaclNS['or']:
+                            # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
+                            inputRDFlist = self.getElementsOfRDFlistOr(self.SHACL, o2) 
+                            list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
+                            updatedIRM.add((s2, p2, list_node_superShapeOr))
+                    break
 
     # This function looks for the simple shapes that were found as equivalent (from the IRM and the input), looks for their respective constraints and call the procedure integrateSimpleShapes which will integrate the shapes and insert them in the updated IRM graph
     def integrateSimpleShapesWithEquivalence(self, inputShapeGraph, currentIRMGraph, updatedIRM: Graph, IrmSimpleShapesWithEquivalence, InputGraphSimpleShapesWithEquivalence : List):
@@ -140,8 +167,9 @@ class ShapeIntegration():
     def integrateSimpleShapes(self, updatedIRM: Graph, irmShapeIRI, irmShapeTargetIRI: str, inputConstraints, irmConstraints: List):
         # Create a temporal graph for the temporal integration of the shapes
         temporalOutcome = Graph()
-        temporalOutcome.add((irmShapeIRI, self.shaclNS.type, self.shaclNS.NodeShape))
+        temporalOutcome.add((irmShapeIRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcome.add((irmShapeIRI, self.shaclNS.targetClass, irmShapeTargetIRI))
+        #temporalOutcome.add((irmShapeIRI, self.shaclNS.deactivated, True))
         # For each constraint of the input, save the constraint type, the constraint value and compare it against all the constraints of the equivalent IRM shape
         for inputConstraint in inputConstraints:
             inputConstraintType = inputConstraint[0]
@@ -189,18 +217,16 @@ class ShapeIntegration():
                                     if p5 not in self.propertyPathNS:
                                         inputPropertyConstraints.append([p5,o5])
             ## Compare constraint per constraint and integrate
-            self.integrateCompoundShapes(updatedIRM, irmShapeIRI, irmShapeTargetIRI, irmShapePathValueIRI, blankNodePropertyIRI, groupID, inputPropertyConstraints, irmPropertyConstraints)
+            self.integrateCompoundShapes(updatedIRM, inputShapeGraph, currentIRMGraph, irmShapeIRI, irmShapeTargetIRI, irmShapePathValueIRI, blankNodePropertyIRI, groupID, inputPropertyConstraints, irmPropertyConstraints)
 
     # This procedure receives the constraints from two equivalent compound shapes, integrates them and then inserts the outcome in the updated IRM graph
-    def integrateCompoundShapes(self, updatedIRM: Graph, irmShapeIRI, irmShapeTargetIRI, irmShapePathValueIRI, blankNodePropertyIRI, groupID: str, inputPropertyConstraints, irmPropertyConstraints: List):
+    def integrateCompoundShapes(self, updatedIRM, inputGraph, irmGraph: Graph, irmShapeIRI, irmShapeTargetIRI, irmShapePathValueIRI, blankNodePropertyIRI, groupID: str, inputPropertyConstraints, irmPropertyConstraints: List):
         # Create a temporal graph for the temporal integration of the shapes
-        prefixIndex = irmShapeIRI.rfind('/')
-        prefixValue = irmShapeIRI[:prefixIndex + 1]
         temporalOutcome = Graph()
         temporalOutcome.add((irmShapeIRI, self.shaclNS["property"], blankNodePropertyIRI))
         temporalOutcome.add((blankNodePropertyIRI, self.propertyPathNS[0], irmShapePathValueIRI))
         temporalOutcome.add((blankNodePropertyIRI, self.shaclNS.group, groupID))
-        temporalOutcome.add((groupID, self.shaclNS.type, self.shaclNS.PropertyGroup))
+        temporalOutcome.add((groupID, self.rdfSyntax.type, self.shaclNS.PropertyGroup))
         nodeShapeProperties = []
         # Get the node shape triples
         for s,p,o in updatedIRM.triples((irmShapeIRI,None,None)):
@@ -208,11 +234,31 @@ class ShapeIntegration():
                 nodeShapeProperties.append([p,o])
         # Create a copy of the constraints from CIN2 which is used for checking if at the end of the comparison, there exist a CIN2x which didn't have any conflict (and so it must be added at the end).
         irmConstraintWithoutConflict = irmPropertyConstraints
+        # First set of integrations  
+        self.resolveConflictsAndIntegrate(inputPropertyConstraints, irmPropertyConstraints, nodeShapeProperties, irmConstraintWithoutConflict, temporalOutcome, inputGraph, irmGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)
+        # Get the constraints of the new super shape of the temporal structure
+        irmPropertyConstraintsUpdatedSuperShape = []
+        for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+            if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+        # Scenario 6 - Integrations of the IRM constraints (C_IN2x) which didn't have any conflict with any constraint C_IN1x.
+        if len(irmConstraintWithoutConflict) > 0:
+            #print(irmConstraintWithoutConflict)
+            #print(irmPropertyConstraintsUpdatedSuperShape)
+            self.resolveConflictsAndIntegrate(irmConstraintWithoutConflict, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, irmConstraintWithoutConflict, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)
+        # Insert the temporal shapes to the updated IRM graph
+        for triple in temporalOutcome:
+            updatedIRM.add(triple)
+
+
+    # This procedure receives two sets of constraints and integrates them into the temporalOutcome graph. In addition, if there is a constraint from the IRM shape which didn't have any conflict, this is saved in the list irmConstraintWithoutConflict.
+    def resolveConflictsAndIntegrate(self, inputPropertyConstraints, irmPropertyConstraints, nodeShapeProperties, irmConstraintWithoutConflict: list, temporalOutcome, inputGraph, irmGraph: Graph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI: str):
         # For each constraint of the input, save the constraint type, the constraint value and compare it against all the constraints of the equivalent IRM shape
         for inputConstraint in inputPropertyConstraints:
             inputConstraintType = inputConstraint[0]
             inputConstraintValue = inputConstraint[1]
             inputConstraintScenario3 = True
+            inputConstraintConflictCounter = 0
             for irmConstraint in irmPropertyConstraints:
                 irmConstraintType = irmConstraint[0]
                 irmConstraintValue = irmConstraint[1]
@@ -224,7 +270,7 @@ class ShapeIntegration():
                     if p != self.propertyPathNS[0] and p != self.shaclNS.group:
                         temporalSuperShapeConstraints.append([p,o])
                 # Retrieve the existing nodeShapes of the structure and their sh:property blankNodes (apart from the super shape, since it's already accessible)
-                for s,p,o in temporalOutcome.triples((None, self.shaclNS.type, self.shaclNS.NodeShape)):
+                for s,p,o in temporalOutcome.triples((None, self.rdfSyntax.type, self.shaclNS.NodeShape)):
                     for s1,p1,o1 in temporalOutcome.triples((s, self.shaclNS["property"], None)): 
                         if o1 != blankNodePropertyIRI:
                             temporalSubShapes.append([s,o1])
@@ -237,168 +283,282 @@ class ShapeIntegration():
                             temporalOutcome.add((blankNodeSubShape[1], irmConstraintType, irmConstraintValue))
                     inputConstraintScenario3 = False
                     irmFoundConstraint = True
+                    inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                 # Other scenarios in which the constraints types are the same but their values are different
                 elif inputConstraintType == irmConstraintType and inputConstraintValue != irmConstraintValue:
                     # nodeKind constraint
                     if inputConstraintType == self.shaclNS.nodeKind:
-                        # Scenario 2-b (nodeKind) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
-                        if inputConstraintValue in self.compoundNodeKindValue and  irmConstraintValue in self.compoundNodeKindValue:
-                            # Add a super shape with an sh:or linking both constraints
-                            orBlankNode = BNode()
-                            c1BlankNode = BNode()
-                            c2BlankNode = BNode()
-                            temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
-                            temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
-                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
-                            temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
-                            # There are no temporal shapes
-                            if len(temporalSuperShapeConstraints) == 0:
-                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            # Scenario in which the temporal structure has already one super shape
-                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            # Scenario in which the temporal structure has already multiple shapes
-                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                                self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                        # Scenario 4 (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x or the inverse. 
-                        # Scenario 4-a (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        elif (inputConstraintValue not in self.compoundNodeKindValue and  irmConstraintValue in self.compoundNodeKindValue):
-                            if (inputConstraintValue == self.shaclNS.IRI and (irmConstraintValue == self.shaclNS.IRIOrLiteral or irmConstraintValue == self.shaclNS.BlankNodeOrIRI)) or (inputConstraintValue == self.shaclNS.Literal and (irmConstraintValue == self.shaclNS.IRIOrLiteral or irmConstraintValue == self.shaclNS.BlankNodeOrLiteral)) or (inputConstraintValue == self.shaclNS.BlankNode and (irmConstraintValue == self.shaclNS.BlankNodeOrIRI or irmConstraintValue == self.shaclNS.BlankNodeOrLiteral)):
-                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes) 
-                        # Scenario 4-b (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif (inputConstraintValue in self.compoundNodeKindValue and  irmConstraintValue not in self.compoundNodeKindValue):
-                            if (irmConstraintValue == self.shaclNS.IRI and (inputConstraintValue == self.shaclNS.IRIOrLiteral or inputConstraintValue == self.shaclNS.BlankNodeOrIRI)) or (irmConstraintValue == self.shaclNS.Literal and (inputConstraintValue == self.shaclNS.IRIOrLiteral or inputConstraintValue == self.shaclNS.BlankNodeOrLiteral)) or (irmConstraintValue == self.shaclNS.BlankNode and (inputConstraintValue == self.shaclNS.BlankNodeOrIRI or inputConstraintValue == self.shaclNS.BlankNodeOrLiteral)):
-                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 5 (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and they are not compatible, meaning that they have values that target different spaces. Furthermore, there exists a super constraint value C3 between the predefined values for this specific SHACL constraint which contains C_IN1x and C_IN2x, such as C_IN1x is_contained_in C3 and C_IN2x is_contained_in C3
-                        elif inputConstraintValue not in self.compoundNodeKindValue and  irmConstraintValue not in self.compoundNodeKindValue and inputConstraintValue != irmConstraintValue:
-                            if (inputConstraintValue == self.shaclNS.IRI and irmConstraintValue == self.shaclNS.Literal) or (inputConstraintValue == self.shaclNS.Literal and irmConstraintValue == self.shaclNS.IRI):
-                                superPredefinedConstraintValue = self.shaclNS.IRIOrLiteral
-                            elif (inputConstraintValue == self.shaclNS.IRI and irmConstraintValue == self.shaclNS.BlankNode) or (inputConstraintValue == self.shaclNS.BlankNode and irmConstraintValue == self.shaclNS.IRI):
-                                superPredefinedConstraintValue = self.shaclNS.BlankNodeOrIRI
-                            elif (inputConstraintValue == self.shaclNS.Literal and irmConstraintValue == self.shaclNS.BlankNode) or (inputConstraintValue == self.shaclNS.BlankNode and irmConstraintValue == self.shaclNS.Literal):
-                                superPredefinedConstraintValue = self.shaclNS.BlankNodeOrLiteral
-                            #temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
-                            # There are no temporal shapes
-                            if len(temporalSuperShapeConstraints) == 0:
-                                temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
-                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            # Scenario in which the temporal structure has already one super shape
-                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                                temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            # Scenario in which the temporal structure has already multiple shapes
-                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                                # C3 is added to all the sub shapes of the lower level (only if C3 doesn't have a conflict with any of the constraints of the specific subshape).
-                                # get the nodeShape IRIs and the associated blankNode of the lower existing level of the TEMPORAL_SHAPE structure.
-                                nodeShapeIRIsLowerLevel = []
-                                nodeShapeIRIsLowerLevel = self.getTemporalHierarchyLowerLevel(temporalSubShapes)
-                                # If there's no conflict of C3 with at least all the constraints of a shape of this level. In nodeShapeIRIsLowerLevel there is [[nodeShapeIRI,blankNodeID]]
-                                for nodeShapeIRI in nodeShapeIRIsLowerLevel:
-                                    conflictAgainstTemporalLowerSubShape = False
-                                    lowerLevelShapePropertyConstraints = []
-                                    for s,p,o in temporalOutcome.triples((nodeShapeIRI[1], None, None)): 
-                                        if p != self.propertyPathNS[0] and p != self.shaclNS.group:
-                                            lowerLevelShapePropertyConstraints.append([p,o])
-                                    conflictAgainstTemporalLowerSubShape = self.isThereConflict(lowerLevelShapePropertyConstraints, inputConstraintType, superPredefinedConstraintValue) 
-                                    # No conflict with a shape of the lower level, then C3 is added
-                                    if conflictAgainstTemporalLowerSubShape == False:
-                                        temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, superPredefinedConstraintValue))
-                                        # Each shape of the lower level of each branch that was updated is taken and divided into two new subshapes (copying every element except C3), where the first one will have C_IN1x and the second one C_IN2x.
-                                        # How to put the correct hiearchyId, meaning sub{lowerLevel+1}_{lastBranch+1}
-                                        followingHierarchyLevel = nodeShapeIRI[2] + 1
-                                        lastSiblingOfLowerLevel = self.getTemporalHierarchyLevelLastSibling(temporalSubShapes, followingHierarchyLevel)
-                                        followingSibling1 = lastSiblingOfLowerLevel + 1
-                                        followingSibling2 = lastSiblingOfLowerLevel + 2
-                                        hierarchyId1 = '_sub' + str(followingHierarchyLevel) + '_' + str(followingSibling1)
-                                        hierarchyId2 = '_sub' + str(followingHierarchyLevel) + '_' + str(followingSibling2)
-                                        self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, hierarchyId1, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, nodeShapeIRI[0], nodeShapeProperties, lowerLevelShapePropertyConstraints)
-                                        self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, hierarchyId2, irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, nodeShapeIRI[0], nodeShapeProperties, lowerLevelShapePropertyConstraints)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 2-b (nodeKind) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
+                            if inputConstraintValue in self.compoundNodeKindValue and  irmConstraintValue in self.compoundNodeKindValue:
+                                # Add a super shape with an sh:or linking both constraints
+                                orBlankNode = BNode()
+                                c1BlankNode = BNode()
+                                c2BlankNode = BNode()
+                                temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
+                                temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
+                                Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
+                                temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
+                                # There are no temporal shapes
+                                if len(temporalSuperShapeConstraints) == 0:
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                # Scenario in which the temporal structure has already one super shape
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                # Scenario in which the temporal structure has already multiple shapes
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                    self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                            # Scenario 4 (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x or the inverse. 
+                            # Scenario 4-a (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            elif (inputConstraintValue not in self.compoundNodeKindValue and  irmConstraintValue in self.compoundNodeKindValue):
+                                if (inputConstraintValue == self.shaclNS.IRI and (irmConstraintValue == self.shaclNS.IRIOrLiteral or irmConstraintValue == self.shaclNS.BlankNodeOrIRI)) or (inputConstraintValue == self.shaclNS.Literal and (irmConstraintValue == self.shaclNS.IRIOrLiteral or irmConstraintValue == self.shaclNS.BlankNodeOrLiteral)) or (inputConstraintValue == self.shaclNS.BlankNode and (irmConstraintValue == self.shaclNS.BlankNodeOrIRI or irmConstraintValue == self.shaclNS.BlankNodeOrLiteral)):
+                                    self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes) 
+                            # Scenario 4-b (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif (inputConstraintValue in self.compoundNodeKindValue and  irmConstraintValue not in self.compoundNodeKindValue):
+                                if (irmConstraintValue == self.shaclNS.IRI and (inputConstraintValue == self.shaclNS.IRIOrLiteral or inputConstraintValue == self.shaclNS.BlankNodeOrIRI)) or (irmConstraintValue == self.shaclNS.Literal and (inputConstraintValue == self.shaclNS.IRIOrLiteral or inputConstraintValue == self.shaclNS.BlankNodeOrLiteral)) or (irmConstraintValue == self.shaclNS.BlankNode and (inputConstraintValue == self.shaclNS.BlankNodeOrIRI or inputConstraintValue == self.shaclNS.BlankNodeOrLiteral)):
+                                    self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 5 (nodeKind) = C_IN1x and C_IN2x are the same type of constraint and they are not compatible, meaning that they have values that target different spaces. Furthermore, there exists a super constraint value C3 between the predefined values for this specific SHACL constraint which contains C_IN1x and C_IN2x, such as C_IN1x is_contained_in C3 and C_IN2x is_contained_in C3
+                            elif inputConstraintValue not in self.compoundNodeKindValue and irmConstraintValue not in self.compoundNodeKindValue and inputConstraintValue != irmConstraintValue:
+                                if (inputConstraintValue == self.shaclNS.IRI and irmConstraintValue == self.shaclNS.Literal) or (inputConstraintValue == self.shaclNS.Literal and irmConstraintValue == self.shaclNS.IRI):
+                                    superPredefinedConstraintValue = self.shaclNS.IRIOrLiteral
+                                elif (inputConstraintValue == self.shaclNS.IRI and irmConstraintValue == self.shaclNS.BlankNode) or (inputConstraintValue == self.shaclNS.BlankNode and irmConstraintValue == self.shaclNS.IRI):
+                                    superPredefinedConstraintValue = self.shaclNS.BlankNodeOrIRI
+                                elif (inputConstraintValue == self.shaclNS.Literal and irmConstraintValue == self.shaclNS.BlankNode) or (inputConstraintValue == self.shaclNS.BlankNode and irmConstraintValue == self.shaclNS.Literal):
+                                    superPredefinedConstraintValue = self.shaclNS.BlankNodeOrLiteral
+                                #temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
+                                # There are no temporal shapes
+                                if len(temporalSuperShapeConstraints) == 0:
+                                    temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                # Scenario in which the temporal structure has already one super shape
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                    temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                # Scenario in which the temporal structure has already multiple shapes
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                    # C3 is added to all the sub shapes of the lower level (only if C3 doesn't have a conflict with any of the constraints of the specific subshape).
+                                    # get the nodeShape IRIs and the associated blankNode of the lower existing level of the TEMPORAL_SHAPE structure.
+                                    nodeShapeIRIsLowerLevel = []
+                                    nodeShapeIRIsLowerLevel = self.getTemporalHierarchyLowerLevel(temporalSubShapes)
+                                    # If there's no conflict of C3 with at least all the constraints of a shape of this level. In nodeShapeIRIsLowerLevel there is [[nodeShapeIRI,blankNodeID,HierarchyLevelInt]]
+                                    for nodeShapeIRI in nodeShapeIRIsLowerLevel:
+                                        conflictAgainstTemporalLowerSubShape = False
+                                        lowerLevelShapePropertyConstraints = []
+                                        for s,p,o in temporalOutcome.triples((nodeShapeIRI[1], None, None)): 
+                                            if p != self.propertyPathNS[0] and p != self.shaclNS.group:
+                                                lowerLevelShapePropertyConstraints.append([p,o])
+                                        conflictAgainstTemporalLowerSubShape = self.isThereConflict(lowerLevelShapePropertyConstraints, inputConstraintType, superPredefinedConstraintValue) 
+                                        # No conflict with a shape of the lower level, then C3 is added
+                                        if conflictAgainstTemporalLowerSubShape == False:
+                                            temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, superPredefinedConstraintValue))
+                                            # Each shape of the lower level of each branch that was updated is taken and divided into two new subshapes (copying every element except C3), where the first one will have C_IN1x and the second one C_IN2x.
+                                            # How to put the correct hiearchyId, meaning sub{lowerLevel+1}_{lastBranch+1}
+                                            followingHierarchyLevel = nodeShapeIRI[2] + 1
+                                            lastSiblingOfLowerLevel = self.getTemporalHierarchyLevelLastSibling(temporalOutcome, followingHierarchyLevel, blankNodePropertyIRI)
+                                            followingSibling1 = lastSiblingOfLowerLevel + 1
+                                            followingSibling2 = lastSiblingOfLowerLevel + 2
+                                            hierarchyId1 = '_sub' + str(followingHierarchyLevel) + '_' + str(followingSibling1)
+                                            hierarchyId2 = '_sub' + str(followingHierarchyLevel) + '_' + str(followingSibling2)
+                                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, hierarchyId1, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, nodeShapeIRI[0], nodeShapeProperties, lowerLevelShapePropertyConstraints)
+                                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, hierarchyId2, irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, nodeShapeIRI[0], nodeShapeProperties, lowerLevelShapePropertyConstraints)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # minCount constraint
                     elif inputConstraintType == self.shaclNS.minCount:
-                        # Scenario 4-a (minCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue > irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (minCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue < irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (minCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue > irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (minCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue < irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # maxCount constraint
                     elif inputConstraintType == self.shaclNS.maxCount:
-                        # Scenario 4-a (maxCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue < irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (maxCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue > irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (maxCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue < irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (maxCount) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue > irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # minInclusive constraint
                     elif inputConstraintType == self.shaclNS.minInclusive:
-                        # Scenario 4-a (minInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue > irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (minInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue < irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (minInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue > irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (minInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue < irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # maxInclusive constraint
                     elif inputConstraintType == self.shaclNS.maxInclusive:
-                        # Scenario 4-a (maxInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue < irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (maxInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue > irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (maxInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue < irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (maxInclusive) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue > irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # minLength constraint
                     elif inputConstraintType == self.shaclNS.minLength:
-                        # Scenario 4-a (minLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue > irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (minLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue < irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (minLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue > irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (minLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue < irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # maxLength constraint
                     elif inputConstraintType == self.shaclNS.maxLength:
-                        # Scenario 4-a (maxLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
-                        if inputConstraintValue < irmConstraintValue:
-                            self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
-                        # Scenario 4-b (maxLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
-                        elif inputConstraintValue > irmConstraintValue:
-                            self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 4-a (maxLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
+                            if inputConstraintValue < irmConstraintValue:
+                                self.scenario4aConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                            # Scenario 4-b (maxLength) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN2x is_contained_in C_IN1x.
+                            elif inputConstraintValue > irmConstraintValue:
+                                self.scenario4bConflictResolution(temporalOutcome, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            self.resolveConflictsAndIntegrate([irmConstraintType,irmConstraintValue], irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # hasValue constraint
                     elif inputConstraintType == self.shaclNS.hasValue:
-                        # Scenario 2-b (hasValue) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
-                        # Add a super shape with an sh:or linking both constraints (in this case is just adding sh:hasValue twice, once for each value)
-                        temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, inputConstraintValue))
-                        temporalOutcome.add((blankNodePropertyIRI, irmConstraintType, irmConstraintValue))
-                        # There are no temporal shapes
-                        if len(temporalSuperShapeConstraints) == 0:
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                        # Scenario in which the temporal structure has already one super shape
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                        # Scenario in which the temporal structure has already multiple shapes
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                            self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        if inputConstraintConflictCounter == 0:
+                            # Get the content of the RDF lists that contain the values of sh:hasValue
+                            inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue) 
+                            irmRDFlist = self.getElementsOfRDFlist(irmGraph, irmConstraintValue) 
+                            equalValues = False
+                            for item1 in inputRDFlist:
+                                for item2 in irmRDFlist:
+                                    if str(item1) == str(item2):
+                                        equalValues = True
+                            # Scenario 1 = C_IN1x and C_IN2x are the same type of constraint and their value spaces are contained in each other, meaning that C_IN1x is contained in C_IN2x and vice-versa (C_IN1x = C_IN2x).
+                            if equalValues == True:
+                                values = sorted(inputRDFlist)
+                                list_node = self.createRDFListFromList(values, temporalOutcome)
+                                temporalOutcome.add((blankNodePropertyIRI, irmConstraintType, list_node))
+                                # Temporal structure with multiple shapes
+                                if len(temporalSubShapes) > 0:
+                                    for blankNodeSubShape in temporalSubShapes:
+                                        list_node = self.createRDFListFromList(values, temporalOutcome)
+                                        temporalOutcome.add((blankNodeSubShape[1], irmConstraintType, list_node))
+                            # Scenario 2-b (hasValue) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
+                            elif equalValues == False:
+                                # Add a super shape with an sh:or linking both constraints (in this case is just adding sh:hasValue twice, once for each value)
+                                values = sorted(inputRDFlist)
+                                list_node_in1 = self.createRDFListFromList(values, temporalOutcome)
+                                temporalOutcome.add((blankNodePropertyIRI, irmConstraintType, list_node_in1))
+                                values = sorted(irmRDFlist)
+                                list_node_irm = self.createRDFListFromList(values, temporalOutcome)
+                                temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, list_node_irm))
+                                # There are no temporal shapes
+                                if len(temporalSuperShapeConstraints) == 0:
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, list_node_irm, irmShapeIRI, nodeShapeProperties)
+                                    self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, list_node_in1, irmShapeIRI, nodeShapeProperties)
+                                # Scenario in which the temporal structure has already one super shape
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, list_node_irm, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, list_node_in1, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                # Scenario in which the temporal structure has already multiple shapes
+                                elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                    self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, list_node_irm, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, list_node_in1, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            irmConstraints = []
+                            irmConstraints.append([irmConstraintType,irmConstraintValue])
+                            self.resolveConflictsAndIntegrate(irmConstraints, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # sh:in constraint
-                    elif inputConstraintType == self.shaclNS['in']:
+                    elif inputConstraintType == self.shaclNS["in"]:
                         # Get the content of the RDF lists that contain the values of sh:in
-                        inputRDFlist = self.getElementsOfRDFlist(self.inputShapes, inputConstraintValue)
-                        irmRDFlist = self.getElementsOfRDFlist(self.SHACL, irmConstraintValue) 
+                        inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue)
+                        irmRDFlist = self.getElementsOfRDFlist(irmGraph, irmConstraintValue) 
                         # Scenario 1 = C_IN1x and C_IN2x are the same type of constraint and their value spaces are contained in each other, meaning that C_IN1x is contained in C_IN2x and vice-versa (C_IN1x = C_IN2x).
                         if inputRDFlist == irmRDFlist:
                             values = sorted(inputRDFlist)
@@ -409,8 +569,7 @@ class ShapeIntegration():
                                 for blankNodeSubShape in temporalSubShapes:
                                     list_node = self.createRDFListFromList(values, temporalOutcome)
                                     temporalOutcome.add((blankNodeSubShape[1], irmConstraintType, list_node))
-                            inputConstraintScenario3 = False
-                            irmFoundConstraint = True
+                            #irmFoundConstraint = True
                         # Scenario 2-b, 4-a and 4-b (in)
                         elif inputRDFlist != irmRDFlist:
                             # Scenario 4-a (in) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
@@ -450,32 +609,47 @@ class ShapeIntegration():
                                     self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, list_node_irmValues2, 1)
                                     self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, list_node_irmValues, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
                                     self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, list_node_inputValues, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            irmFoundConstraint = True
+                        inputConstraintScenario3 = False
+                        irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # class constraint
                     elif inputConstraintType == self.shaclNS['class']:
-                        # Scenario 2-b (class) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
-                        # Add a super shape with an sh:or linking both constraints
-                        orBlankNode = BNode()
-                        c1BlankNode = BNode()
-                        c2BlankNode = BNode()
-                        temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
-                        temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
-                        Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
-                        temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
-                        # There are no temporal shapes
-                        if len(temporalSuperShapeConstraints) == 0:
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                        # Scenario in which the temporal structure has already one super shape
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                        # Scenario in which the temporal structure has already multiple shapes
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                            self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 2-b (class) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
+                            # Add a super shape with an sh:or linking both constraints
+                            orBlankNode = BNode()
+                            c1BlankNode = BNode()
+                            c2BlankNode = BNode()
+                            temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
+                            temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
+                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
+                            temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
+                            # There are no temporal shapes
+                            if len(temporalSuperShapeConstraints) == 0:
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
+                            # Scenario in which the temporal structure has already one super shape
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                            # Scenario in which the temporal structure has already multiple shapes
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            irmConstraints = []
+                            irmConstraints.append([irmConstraintType,irmConstraintValue])
+                            self.resolveConflictsAndIntegrate(irmConstraints, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     inputConstraintScenario3 = False
                 # Other scenarios in which the constraints types are different but their values are equal
                 elif inputConstraintType != irmConstraintType and inputConstraintValue == irmConstraintValue:
@@ -496,60 +670,87 @@ class ShapeIntegration():
                             self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
                         inputConstraintScenario3 = False
                         irmFoundConstraint = True
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                 # Other scenarios in which the constraints types and their values are different
                 elif inputConstraintType != irmConstraintType and inputConstraintValue != irmConstraintValue: 
                     # (nodeKind != Literal and [minInclusive or maxInclusive or minLength or maxLength])
                     if ((inputConstraintType == self.shaclNS.nodeKind and inputConstraintValue != self.shaclNS.Literal) and ((irmConstraintType == self.shaclNS.minInclusive) or (irmConstraintType == self.shaclNS.maxInclusive) or (irmConstraintType == self.shaclNS.minLength) or (irmConstraintType == self.shaclNS.maxLength))) or ((irmConstraintType == self.shaclNS.nodeKind and irmConstraintValue != self.shaclNS.Literal) and ((inputConstraintType == self.shaclNS.minInclusive) or (inputConstraintType == self.shaclNS.maxInclusive) or (inputConstraintType == self.shaclNS.minLength) or (inputConstraintType == self.shaclNS.maxLength))):
-                        # Scenario 2-b (nodeKind != Literal and [minInclusive or maxInclusive or minLength or maxLength]) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
-                        # Add a super shape with an sh:or linking both constraints
-                        orBlankNode = BNode()
-                        c1BlankNode = BNode()
-                        c2BlankNode = BNode()
-                        temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
-                        temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
-                        Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
-                        temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
-                        # There are no temporal shapes
-                        if len(temporalSuperShapeConstraints) == 0:
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                        # Scenario in which the temporal structure has already one super shape
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                        # Scenario in which the temporal structure has already multiple shapes
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                            self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 2-b (nodeKind != Literal and [minInclusive or maxInclusive or minLength or maxLength]) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
+                            # Add a super shape with an sh:or linking both constraints
+                            orBlankNode = BNode()
+                            c1BlankNode = BNode()
+                            c2BlankNode = BNode()
+                            temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
+                            temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
+                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
+                            temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
+                            # There are no temporal shapes
+                            if len(temporalSuperShapeConstraints) == 0:
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
+                            # Scenario in which the temporal structure has already one super shape
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                            # Scenario in which the temporal structure has already multiple shapes
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            irmConstraints = []
+                            irmConstraints.append([irmConstraintType,irmConstraintValue])
+                            self.resolveConflictsAndIntegrate(irmConstraints, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
                         inputConstraintScenario3 = False
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                     # (minCount > maxCount OR minInclusive > maxInclusive)
                     elif (inputConstraintType == self.shaclNS.minCount and irmConstraintType == self.shaclNS.maxCount and inputConstraintValue > irmConstraintValue) or (irmConstraintType == self.shaclNS.minCount and inputConstraintType == self.shaclNS.maxCount and inputConstraintValue < irmConstraintValue) or (inputConstraintType == self.shaclNS.minInclusive and irmConstraintType == self.shaclNS.maxInclusive and inputConstraintValue > irmConstraintValue) or (inputConstraintType == self.shaclNS.maxInclusive and irmConstraintType == self.shaclNS.minInclusive and inputConstraintValue < irmConstraintValue) or (inputConstraintType == self.shaclNS.minInclusive and irmConstraintType == self.shaclNS.maxInclusive and inputConstraintValue > irmConstraintValue) or (inputConstraintType == self.shaclNS.minLength and irmConstraintType == self.shaclNS.maxLength and inputConstraintValue > irmConstraintValue) or (inputConstraintType == self.shaclNS.maxLength and irmConstraintType == self.shaclNS.minLength and inputConstraintValue < irmConstraintValue):
-                        # Scenario 2-b (minCount > maxCount) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
-                        # Add a super shape with an sh:or linking both constraints
-                        orBlankNode = BNode()
-                        c1BlankNode = BNode()
-                        c2BlankNode = BNode()
-                        temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
-                        temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
-                        Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
-                        temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
-                        # There are no temporal shapes
-                        if len(temporalSuperShapeConstraints) == 0:
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
-                            self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
-                        # Scenario in which the temporal structure has already one super shape
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                        # Scenario in which the temporal structure has already multiple shapes
-                        elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
-                            self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
-                            self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        if inputConstraintConflictCounter == 0:
+                            # Scenario 2-b (minCount > maxCount) = C_IN1x and C_IN2x are the same type of constraint C_IN1x not_contained_in C_IN2x, C_IN2x not_contained_in C_IN1x and there's no super constraint value C3 between the predefined values for this specific type of SHACL constraint
+                            # Add a super shape with an sh:or linking both constraints
+                            orBlankNode = BNode()
+                            c1BlankNode = BNode()
+                            c2BlankNode = BNode()
+                            temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
+                            temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
+                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
+                            temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))
+                            # There are no temporal shapes
+                            if len(temporalSuperShapeConstraints) == 0:
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties)
+                                self.feedTemporalShapes(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties)
+                            # Scenario in which the temporal structure has already one super shape
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) == 0:
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                            # Scenario in which the temporal structure has already multiple shapes
+                            elif len(temporalSuperShapeConstraints) > 0 and len(temporalSubShapes) > 0:
+                                self.hierarchyReorganizationProcess(temporalOutcome, irmShapeIRI, irmConstraintType, irmConstraintValue, 1)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, irmConstraintType, irmConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                                self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_2', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraints)
+                        # C_IN1x WITH MULTIPLE CONFLICTS: C_IN2y is the constraint that is attempted to be added to the super shape of the TEMPORAL_SHAPE
+                        elif inputConstraintConflictCounter > 0:
+                            irmPropertyConstraintsUpdatedSuperShape = []
+                            for s1,p1,o1 in temporalOutcome.triples((blankNodePropertyIRI, None, None)):
+                                if p1 not in self.propertyPathNS and p1 != self.shaclNS.group:
+                                    irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
+                            # To not loose the irmConstraintWithoutConflict list, I create and pass a new empty one
+                            emptyList = []
+                            irmConstraints = []
+                            irmConstraints.append([irmConstraintType,irmConstraintValue])
+                            self.resolveConflictsAndIntegrate(irmConstraints, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, emptyList, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)    
                         irmFoundConstraint = True
                         inputConstraintScenario3 = False
+                        inputConstraintConflictCounter = inputConstraintConflictCounter + 1
                 # If the IRM constraint was treated, delete it from the backup irm list of properties
                 if irmFoundConstraint == True:
                     for row in irmConstraintWithoutConflict:
@@ -564,21 +765,31 @@ class ShapeIntegration():
                     if p != self.propertyPathNS[0] and p != self.shaclNS.group:
                         temporalSuperShapeConstraintsScenario3.append([p,o])
                 # Retrieve the existing nodeShapes of the structure and their sh:property blankNodes (apart from the super shape, since it's already accessible)
-                for s,p,o in temporalOutcome.triples((None, self.shaclNS.type, self.shaclNS.NodeShape)):
+                for s,p,o in temporalOutcome.triples((None, self.rdfSyntax.type, self.shaclNS.NodeShape)):
                     for s1,p1,o1 in temporalOutcome.triples((s, self.shaclNS["property"], None)): 
                         if o1 != blankNodePropertyIRI:
                             temporalSubShapesScenario3.append([s,o1])
                 # Scenario 3 without temporal shapes
                 if len(temporalSuperShapeConstraintsScenario3) == 0:
-                    temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, inputConstraintValue))
+                    if inputConstraintType != self.shaclNS['in'] and inputConstraintType != self.shaclNS.hasValue:
+                        temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, inputConstraintValue))
+                    elif inputConstraintType == self.shaclNS['in'] or inputConstraintType == self.shaclNS.hasValue:
+                        # Get the content of the RDF lists that contain the values of sh:in
+                        inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue)
+                        values = sorted(inputRDFlist)
+                        list_node = self.createRDFListFromList(values, temporalOutcome)
+                        temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, list_node))
                 # Scenario 3 in which the temporal structure has already one super shape
                 elif len(temporalSuperShapeConstraintsScenario3) > 0 and len(temporalSubShapesScenario3) == 0:
-                    self.feedTemporalStructurWithExistingSuper(temporalOutcome, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraintsScenario3)
+                    #print('1 shape temporal')
+                    #print(inputConstraintType)
+                    self.feedTemporalStructurWithExistingSuperInScenario3(temporalOutcome, inputGraph, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraintsScenario3)
                 # Scenario 3 in which the temporal structure has already multiple shapes
                 elif len(temporalSuperShapeConstraintsScenario3) > 0 and len(temporalSubShapesScenario3) > 0:
+                    #print('multiple temporal shapes')
+                    #print(inputConstraintType)
                     # C_IN1x is compared against the super TEMPORAL_SHAPE
                     conflictAgainstTemporalSuperShape = self.isThereConflict(temporalSuperShapeConstraintsScenario3, inputConstraintType, inputConstraintValue) 
-                    #print(conflictAgainstTemporalSuperShape)
                     # IF C_IN1x has no conflict with neither of the respective constraints
                     if conflictAgainstTemporalSuperShape == False:
                         # C_IN1x is attempted to be added to the lower existing level of the TEMPORAL_SHAPE structure. 
@@ -596,31 +807,43 @@ class ShapeIntegration():
                             conflictAgainstTemporalLowerSubShape = self.isThereConflict(lowerLevelShapePropertyConstraints, inputConstraintType, inputConstraintValue) 
                             # No conflict with a shape of the lower level
                             if conflictAgainstTemporalLowerSubShape == False:
-                                temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, inputConstraintValue))
+                                if inputConstraintType != self.shaclNS['in'] and inputConstraintType != self.shaclNS.hasValue:
+                                    temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, inputConstraintValue))
+                                elif inputConstraintType == self.shaclNS['in'] or inputConstraintType == self.shaclNS.hasValue:
+                                    #print('Inserta el in aca')
+                                    # Get the content of the RDF lists that contain the values of sh:in
+                                    inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue)
+                                    #print('in values')
+                                    #print(inputRDFlist)
+                                    values = sorted(inputRDFlist)
+                                    list_node = self.createRDFListFromList(values, temporalOutcome)
+                                    temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, list_node))
                                 insertedInLowerLevel = True
                         # IF there's one or more conflicts with all the shapes of the lower level
-                        if insertedInLowerLevel == False: # *** THIS CAN BE TESTED WHEN I COMPLETE THE INCONSISTENCIES BETWEEN DIFFERENT CONSTRAINT TYPES
+                        if insertedInLowerLevel == False:
                             # C_IN1x is attempted to be added through an sh:or to the super TEMPORAL_SHAPE. The sh:or involves all the original constraints of the shape.
                             orBlankNode = BNode()
                             c1BlankNode = BNode()
-                            #c2BlankNode = BNode()
-                            temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
-                            #temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
-                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, blankNodePropertyIRI])
-                            temporalOutcome.add((irmShapeIRI, self.shaclNS["property"], orBlankNode))              
-
-        # Scenario 6 - If C_IN2x hasn't have any conflict with any constraint C_IN1x.
-        for C_IN2xConstraint in irmConstraintWithoutConflict:
-            temporalOutcome.add((blankNodePropertyIRI, C_IN2xConstraint[0], C_IN2xConstraint[1]))
-        # Insert the temporal shapes to the updated IRM graph
-        for triple in temporalOutcome:
-            updatedIRM.add(triple)
+                            c2BlankNode = BNode()
+                            if inputConstraintType != self.shaclNS['in'] and inputConstraintType != self.shaclNS.hasValue:
+                                temporalOutcome.add((c1BlankNode, inputConstraintType, inputConstraintValue))
+                            elif inputConstraintType == self.shaclNS['in'] or inputConstraintType == self.shaclNS.hasValue:
+                                # Get the content of the RDF lists that contain the values of sh:in
+                                inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue)
+                                values = sorted(inputRDFlist)
+                                list_node = self.createRDFListFromList(values, temporalOutcome)
+                                temporalOutcome.add((c1BlankNode, inputConstraintType, list_node))
+                            temporalOutcome.add((c2BlankNode, irmConstraintType, irmConstraintValue))
+                            Collection(temporalOutcome, orBlankNode, [c1BlankNode, c2BlankNode])
+                            temporalOutcome.remove((blankNodePropertyIRI,irmConstraintType, irmConstraintValue))
+                            temporalOutcome.add((blankNodePropertyIRI, self.shaclNS["or"], orBlankNode))       
 
     def feedTemporalShapes(self, temporalOutcomeGraph: Graph, groupId, hiearchyId, ShapeTargetIRI, ShapePathValueIRI, ConstraintType, ConstraintValue, superShapeIRI:str, nodeShapeProperties:list):
         bNodeNodeShape = BNode()
         nodeShape_IRI = groupId + hiearchyId
-        temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.type, self.shaclNS.NodeShape))
+        temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
+        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
         for nodeShapeProperty in nodeShapeProperties:
             temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
@@ -632,8 +855,9 @@ class ShapeIntegration():
     def feedTemporalStructurWithExistingSuper(self, temporalOutcomeGraph: Graph, groupId, hiearchyId, ShapeTargetIRI, ShapePathValueIRI, ConstraintType, ConstraintValue, superShapeIRI:str, nodeShapeProperties, temporalSuperShapeConstraints: list):
         bNodeNodeShape = BNode()
         nodeShape_IRI = groupId + hiearchyId
-        temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.type, self.shaclNS.NodeShape))
+        temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
+        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
         for nodeShapeProperty in nodeShapeProperties:
             temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
@@ -643,11 +867,46 @@ class ShapeIntegration():
         temporalOutcomeGraph.add((bNodeNodeShape, ConstraintType, ConstraintValue))
         temporalOutcomeGraph.add((bNodeNodeShape, self.shaclNS.group, groupId))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.node, superShapeIRI))
+    
+    def feedTemporalStructurWithExistingSuperInScenario3(self, temporalOutcomeGraph, inputGraph: Graph, groupId, hiearchyId, ShapeTargetIRI, ShapePathValueIRI, ConstraintType, ConstraintValue, superShapeIRI:str, nodeShapeProperties, temporalSuperShapeConstraints: list):
+        bNodeNodeShape = BNode()
+        nodeShape_IRI = groupId + hiearchyId
+        temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
+        temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
+        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
+        for nodeShapeProperty in nodeShapeProperties:
+            temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
+        temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
+        temporalOutcomeGraph.add((bNodeNodeShape, self.propertyPathNS[0], ShapePathValueIRI))
+        for temporalConstraint in temporalSuperShapeConstraints:
+            if temporalConstraint[0] != self.shaclNS['in'] and temporalConstraint[0] != self.shaclNS.hasValue:
+                temporalOutcomeGraph.add((bNodeNodeShape, temporalConstraint[0], temporalConstraint[1]))
+            elif temporalConstraint[0] == self.shaclNS['in'] or temporalConstraint[0] == self.shaclNS.hasValue:
+                # Get the content of the RDF lists that contain the values of sh:in
+                superShapeInRDFlist = self.getElementsOfRDFlist(temporalOutcomeGraph, temporalConstraint[1])
+                valuesSuperShapeIn = sorted(superShapeInRDFlist)
+                list_node_superShapeIn = self.createRDFListFromList(valuesSuperShapeIn, temporalOutcomeGraph)
+                temporalOutcomeGraph.add((bNodeNodeShape, temporalConstraint[0], list_node_superShapeIn))
+        if ConstraintType != self.shaclNS['in'] and ConstraintType != self.shaclNS.hasValue and ConstraintType != self.shaclNS['or']:
+            temporalOutcomeGraph.add((bNodeNodeShape, ConstraintType, ConstraintValue))
+        elif ConstraintType == self.shaclNS['in'] or ConstraintType == self.shaclNS.hasValue:
+            # Get the content of the RDF lists that contain the values of sh:in
+            inputRDFlist = self.getElementsOfRDFlist(inputGraph, ConstraintValue)
+            values = sorted(inputRDFlist)
+            list_node = self.createRDFListFromList(values, temporalOutcomeGraph)
+            temporalOutcomeGraph.add((bNodeNodeShape, ConstraintType, list_node))
+        elif ConstraintType == self.shaclNS['or']:
+            # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
+            inputRDFlist = self.getElementsOfRDFlistOr(inputGraph, ConstraintValue) 
+            list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, temporalOutcomeGraph) 
+            temporalOutcomeGraph.add((bNodeNodeShape, ConstraintType, list_node_superShapeOr))
+        temporalOutcomeGraph.add((bNodeNodeShape, self.shaclNS.group, groupId))
+        temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.node, superShapeIRI))
 
     # HIERARCHY_REORGANIZATION_PROCESS
     def hierarchyReorganizationProcess(self, temporalShapeStructure: Graph, superShapeIRI, irmConstraintType, irmConstraintValue: str, startLevel: int):
         substring = '_sub'
-        for s,p,o in temporalShapeStructure.triples((None, self.shaclNS.type, self.shaclNS.NodeShape)):
+        for s,p,o in temporalShapeStructure.triples((None, self.rdfSyntax.type, self.shaclNS.NodeShape)):
             if s != superShapeIRI:
                 for s1,p1,o1 in temporalShapeStructure.triples((s, None, None)):
                     # Take the shape IRI until the hierarchy value
@@ -687,9 +946,9 @@ class ShapeIntegration():
                                         indexCompleteHierarchyID = o1.rfind('_', 0, indexNode)
                                         nodeIRIroot = o1[:indexCompleteHierarchyID + 1]
                                         sibling = o1[indexNode + 1:]
-                                        nodeHierarchyValue = s[indexCompleteHierarchyID + len(substring)]
-                                        nodeNewHierarchyValue = int(nodeHierarchyValue) +1
-                                        newNodeObject = nodeIRIroot + substring + nodeNewHierarchyValue + sibling
+                                        nodeHierarchyValue = s[indexCompleteHierarchyID + len(substring) - 1]
+                                        nodeNewHierarchyValue = int(nodeHierarchyValue) + 1
+                                        newNodeObject = nodeIRIroot + substring + str(nodeNewHierarchyValue) + str(sibling)
                                         # Delete the node triples that reference the old IRI
                                         temporalShapeStructure.remove((s,p1,o1))
                                         # Insert the triples with the new IRI
@@ -703,15 +962,6 @@ class ShapeIntegration():
                 conflictFound = True
                 break
         return conflictFound
-    
-    # OLD isThereConflict
-    #def isThereConflict(self: Graph, temporalSuperShapeConstraintsScenario3: list, inputConstraintType, inputConstraintValue: str):
-    #    conflictFound = False
-    #    for shapeConstraint in temporalSuperShapeConstraintsScenario3:
-    #        if (inputConstraintType == shapeConstraint[0] and inputConstraintValue == shapeConstraint[1]) or (inputConstraintType == shapeConstraint[0] and inputConstraintValue != shapeConstraint[1]) or (inputConstraintType != shapeConstraint[0] and (inputConstraintType == self.shaclNS["not"] or shapeConstraint[0] == self.shaclNS["not"]) and inputConstraintValue == shapeConstraint[1]):
-    #            conflictFound = True
-    #            break
-    #    return conflictFound
     
     # Find the lower level of the hierarchy and retrieve the IRIs of the node shapes which belong to this level ([nodeShapeIRI, blankNodeID, lowerHierarchyLevelInteger])
     def getTemporalHierarchyLowerLevel(self, temporalSubShapesScenario3: list): 
@@ -733,11 +983,16 @@ class ShapeIntegration():
         return nodeShapeIRIsLowerLevel
     
     # Function to return the last sibling of the lower level of a temporal structure of shapes
-    def getTemporalHierarchyLevelLastSibling(self, temporalSubShapesScenario3: list, hierarchyCurrentLevel: int): 
+    def getTemporalHierarchyLevelLastSibling(self, temporalOutcome: Graph, hierarchyCurrentLevel: int, blankNodePropertyIRI: str): 
         preHierarchyNumber = '_sub'
         postHierarchyNumber = '_'
         lastSiblingValue = 0
-        for nodeShapeIRI in temporalSubShapesScenario3:
+        temporalSubShapes = []
+        for s,p,o in temporalOutcome.triples((None, self.rdfSyntax.type, self.shaclNS.NodeShape)):
+            for s1,p1,o1 in temporalOutcome.triples((s, self.shaclNS["property"], None)): 
+                if o1 != blankNodePropertyIRI:
+                    temporalSubShapes.append([s,o1])
+        for nodeShapeIRI in temporalSubShapes:
             start_index = nodeShapeIRI[0].rfind(preHierarchyNumber) + 1
             end_index = nodeShapeIRI[0].rfind(postHierarchyNumber)
             if start_index != -1 and end_index != -1 and start_index < end_index:
@@ -799,7 +1054,7 @@ class ShapeIntegration():
         setOfElements = set()
         current = inputConstraintValue
         while current != self.rdfSyntax.nil:
-            first = shapeGraph.value(subject=current, predicate=self.rdfSyntax.first)
+            first = str(shapeGraph.value(subject=current, predicate=self.rdfSyntax.first))
             if first:
                 setOfElements.add(first)
             current = shapeGraph.value(subject=current, predicate=self.rdfSyntax.rest)
@@ -815,6 +1070,34 @@ class ShapeIntegration():
             temporalOutcome.add((list_node, self.rdfSyntax.rest, current))
             current = list_node
         return current
+    
+    def createRDFListFromListOr(self, values:List, temporalOutcome: Graph):
+        current = self.rdfSyntax.nil
+        for value in reversed(values):
+            list_node = BNode()
+            contraintBnode = BNode()
+            temporalOutcome.add((list_node, self.rdfSyntax.first, contraintBnode))
+            temporalOutcome.add((contraintBnode, value[0], value[1]))
+            temporalOutcome.add((list_node, self.rdfSyntax.rest, current))
+            current = list_node
+        return current
+    
+    def getElementsOfRDFlistOr(self, shapeGraph: Graph, inputConstraintValue: str):
+        current = inputConstraintValue
+        # First get the blank nodes that are aimed by the sh:or list
+        orBnodes = []
+        ListOfConstraintValues = []
+        while current != self.rdfSyntax.nil:
+            first = shapeGraph.value(subject=current, predicate=self.rdfSyntax.first)
+            if first:
+                orBnodes.append(first)
+            current = shapeGraph.value(subject=current, predicate=self.rdfSyntax.rest)
+            if current is None:
+                break
+        for blankNode in orBnodes:
+            for s,p,o in shapeGraph.triples((blankNode, None, None)):
+                ListOfConstraintValues.append([p,o])
+        return ListOfConstraintValues
     
     def scenario4aConflictResolutionIn(self, temporalOutcome: Graph, blankNodePropertyIRI, irmConstraintType, irmConstraintValue, groupID, ShapeTargetIRI, ShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI: str, temporalSuperShapeConstraints, nodeShapeProperties, temporalSubShapes: list, inputRDFlist, irmRDFlist: set):
         inputValues = sorted(inputRDFlist)
@@ -874,6 +1157,19 @@ class ShapeIntegration():
                 if conflictAgainstTemporalSubShape == False:
                     list_node = self.createRDFListFromList(irmValues, temporalOutcome)
                     temporalOutcome.add((subShapeBnode[1], irmConstraintType, list_node))
+
+    def deactivateShapesOfUpdatedIRM(self, updatedIRM: Graph):
+        for s,p,o in updatedIRM.triples((None, self.rdfSyntax.type, self.shaclNS.NodeShape)):
+            insertDeactivate = True
+            for s1,p1,o1 in updatedIRM.triples((s, None, None)):
+                if p1 == self.shaclNS.deactivated and o1 == False:
+                    updatedIRM.remove((s1,p1,o1))
+                    updatedIRM.add((s1,p1,True))
+                    insertDeactivate = False
+                elif p1 == self.shaclNS.deactivated and o1 == True:
+                    insertDeactivate = False
+            if insertDeactivate == True:
+                updatedIRM.add((s,self.shaclNS.deactivated,Literal(True)))
 
     # Integrating a set of shapes into a single shape
     def integration(self):
@@ -942,19 +1238,21 @@ class ShapeIntegration():
                 InputCompoundTargetWithoutEquivalence.append([inputCompoundElement2[0],inputCompoundElement2[1],inputCompoundElement2[2]])
 
         # Insert simple shapes without equivalence from the current IRM in the updated IRM
-        #self.insertSimpleTargetsWithoutEquivalence(self.SHACL, updatedIRM, IrmNodeShapesSimpleTargetWithoutEquivalence)
+        self.insertSimpleTargetsWithoutEquivalence(self.SHACL, updatedIRM, IrmNodeShapesSimpleTargetWithoutEquivalence)
 
         # Insert simple shapes without equivalence from the input shape graph in the updated IRM
-        #self.insertSimpleTargetsWithoutEquivalence(self.inputShapes, updatedIRM, InputNodeShapesSimpleTargetWithoutEquivalence)
+        self.insertSimpleTargetsWithoutEquivalence(self.inputShapes, updatedIRM, InputNodeShapesSimpleTargetWithoutEquivalence)
 
         # Insert compound shapes without equivalence from input shape graph in the updated IRM
         #self.insertCompoundInputTargetsWithoutEquivalence(self.inputShapes, updatedIRM, IrmCompoundTargetWithoutEquivalence)
+        self.insertCompoundInputTargetsWithoutEquivalence(self.inputShapes, updatedIRM, InputCompoundTargetWithoutEquivalence)
 
         # Insert compound shapes without equivalence from the  current IRMin the updated IRM
         #self.insertCompoundIRMTargetsWithoutEquivalence(self.SHACL, updatedIRM, InputCompoundTargetWithoutEquivalence)
+        self.insertCompoundIRMTargetsWithoutEquivalence(self.SHACL, updatedIRM, IrmCompoundTargetWithoutEquivalence)
 
         # Insert the integration of the equivalent simple shapes
-        #self.integrateSimpleShapesWithEquivalence(self.inputShapes, self.SHACL, updatedIRM, IrmNodeShapesSimpleTargetWithEquivalence, InputNodeShapesSimpleTargetWithEquivalence)
+        self.integrateSimpleShapesWithEquivalence(self.inputShapes, self.SHACL, updatedIRM, IrmNodeShapesSimpleTargetWithEquivalence, InputNodeShapesSimpleTargetWithEquivalence)
 
         #print('graph before integration')
         #for triple in updatedIRM:
@@ -966,13 +1264,16 @@ class ShapeIntegration():
         #for triple in updatedIRM:
         #    print(triple)
 
-        updatedIRM.serialize('C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/with multiple temporal shapes/Consistency test/updatedIRM.ttl', format='turtle')
+        # Set all the node shapes with sh:deactivated True
+        self.deactivateShapesOfUpdatedIRM(updatedIRM)
+
+        updatedIRM.serialize('C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/updatedIRM.ttl', format='turtle')
 
 # Main program. Loads the input shape graphs in a List of shape graphs. (SCOOP)
 if __name__ == "__main__":
     
-    InputShape1Path = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/with multiple temporal shapes/Consistency test/compound_nodeShape_in1.shacl'
-    currentIrmPath = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/with multiple temporal shapes/Consistency test/compound_nodeShape_IRM.shacl'
+    InputShape1Path = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/Annecy.shacl'
+    currentIrmPath = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/currentIRM.ttl'
 
     InputShapeGraph = Graph()
     
