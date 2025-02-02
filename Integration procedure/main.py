@@ -1,7 +1,6 @@
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from typing import List, Dict
 from rdflib.collection import Collection
-import pprint
 
 # Class which describes the functions related to a shape integration object.
 class ShapeIntegration():
@@ -169,7 +168,6 @@ class ShapeIntegration():
         temporalOutcome = Graph()
         temporalOutcome.add((irmShapeIRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcome.add((irmShapeIRI, self.shaclNS.targetClass, irmShapeTargetIRI))
-        #temporalOutcome.add((irmShapeIRI, self.shaclNS.deactivated, True))
         # For each constraint of the input, save the constraint type, the constraint value and compare it against all the constraints of the equivalent IRM shape
         for inputConstraint in inputConstraints:
             inputConstraintType = inputConstraint[0]
@@ -243,8 +241,6 @@ class ShapeIntegration():
                 irmPropertyConstraintsUpdatedSuperShape.append([p1,o1])
         # Scenario 6 - Integrations of the IRM constraints (C_IN2x) which didn't have any conflict with any constraint C_IN1x.
         if len(irmConstraintWithoutConflict) > 0:
-            #print(irmConstraintWithoutConflict)
-            #print(irmPropertyConstraintsUpdatedSuperShape)
             self.resolveConflictsAndIntegrate(irmConstraintWithoutConflict, irmPropertyConstraintsUpdatedSuperShape, nodeShapeProperties, irmConstraintWithoutConflict, temporalOutcome, irmGraph, inputGraph, blankNodePropertyIRI, groupID, irmShapeTargetIRI, irmShapePathValueIRI, irmShapeIRI)
         # Insert the temporal shapes to the updated IRM graph
         for triple in temporalOutcome:
@@ -329,7 +325,6 @@ class ShapeIntegration():
                                     superPredefinedConstraintValue = self.shaclNS.BlankNodeOrIRI
                                 elif (inputConstraintValue == self.shaclNS.Literal and irmConstraintValue == self.shaclNS.BlankNode) or (inputConstraintValue == self.shaclNS.BlankNode and irmConstraintValue == self.shaclNS.Literal):
                                     superPredefinedConstraintValue = self.shaclNS.BlankNodeOrLiteral
-                                #temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
                                 # There are no temporal shapes
                                 if len(temporalSuperShapeConstraints) == 0:
                                     temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, superPredefinedConstraintValue))
@@ -569,7 +564,6 @@ class ShapeIntegration():
                                 for blankNodeSubShape in temporalSubShapes:
                                     list_node = self.createRDFListFromList(values, temporalOutcome)
                                     temporalOutcome.add((blankNodeSubShape[1], irmConstraintType, list_node))
-                            #irmFoundConstraint = True
                         # Scenario 2-b, 4-a and 4-b (in)
                         elif inputRDFlist != irmRDFlist:
                             # Scenario 4-a (in) = C_IN1x and C_IN2x are the same type of constraint and their value spaces present a containment relationship where C_IN1x is_contained_in C_IN2x.
@@ -781,13 +775,9 @@ class ShapeIntegration():
                         temporalOutcome.add((blankNodePropertyIRI, inputConstraintType, list_node))
                 # Scenario 3 in which the temporal structure has already one super shape
                 elif len(temporalSuperShapeConstraintsScenario3) > 0 and len(temporalSubShapesScenario3) == 0:
-                    #print('1 shape temporal')
-                    #print(inputConstraintType)
                     self.feedTemporalStructurWithExistingSuperInScenario3(temporalOutcome, inputGraph, groupID, '_sub1_1', irmShapeTargetIRI, irmShapePathValueIRI, inputConstraintType, inputConstraintValue, irmShapeIRI, nodeShapeProperties, temporalSuperShapeConstraintsScenario3)
                 # Scenario 3 in which the temporal structure has already multiple shapes
                 elif len(temporalSuperShapeConstraintsScenario3) > 0 and len(temporalSubShapesScenario3) > 0:
-                    #print('multiple temporal shapes')
-                    #print(inputConstraintType)
                     # C_IN1x is compared against the super TEMPORAL_SHAPE
                     conflictAgainstTemporalSuperShape = self.isThereConflict(temporalSuperShapeConstraintsScenario3, inputConstraintType, inputConstraintValue) 
                     # IF C_IN1x has no conflict with neither of the respective constraints
@@ -810,11 +800,8 @@ class ShapeIntegration():
                                 if inputConstraintType != self.shaclNS['in'] and inputConstraintType != self.shaclNS.hasValue:
                                     temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, inputConstraintValue))
                                 elif inputConstraintType == self.shaclNS['in'] or inputConstraintType == self.shaclNS.hasValue:
-                                    #print('Inserta el in aca')
                                     # Get the content of the RDF lists that contain the values of sh:in
                                     inputRDFlist = self.getElementsOfRDFlist(inputGraph, inputConstraintValue)
-                                    #print('in values')
-                                    #print(inputRDFlist)
                                     values = sorted(inputRDFlist)
                                     list_node = self.createRDFListFromList(values, temporalOutcome)
                                     temporalOutcome.add((nodeShapeIRI[1], inputConstraintType, list_node))
@@ -843,7 +830,6 @@ class ShapeIntegration():
         nodeShape_IRI = groupId + hiearchyId
         temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
-        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
         for nodeShapeProperty in nodeShapeProperties:
             temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
@@ -857,7 +843,6 @@ class ShapeIntegration():
         nodeShape_IRI = groupId + hiearchyId
         temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
-        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
         for nodeShapeProperty in nodeShapeProperties:
             temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
@@ -873,7 +858,6 @@ class ShapeIntegration():
         nodeShape_IRI = groupId + hiearchyId
         temporalOutcomeGraph.add((nodeShape_IRI, self.rdfSyntax.type, self.shaclNS.NodeShape))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.targetClass, ShapeTargetIRI))
-        #temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS.deactivated, True))
         for nodeShapeProperty in nodeShapeProperties:
             temporalOutcomeGraph.add((nodeShape_IRI, nodeShapeProperty[0], nodeShapeProperty[1]))
         temporalOutcomeGraph.add((nodeShape_IRI, self.shaclNS["property"], bNodeNodeShape))
@@ -942,7 +926,7 @@ class ShapeIntegration():
                                         temporalShapeStructure.remove((s,p1,o1))
                                         # Insert the triples with the new IRI
                                         temporalShapeStructure.add((URIRef(newShapeIRI),p1,URIRef(newNodeObject)))
-                                    elif hierarchyNode != 'sup': ### *** THIS NEEDS TO BE TESTED ###
+                                    elif hierarchyNode != 'sup':
                                         indexCompleteHierarchyID = o1.rfind('_', 0, indexNode)
                                         nodeIRIroot = o1[:indexCompleteHierarchyID + 1]
                                         sibling = o1[indexNode + 1:]
@@ -1244,25 +1228,16 @@ class ShapeIntegration():
         self.insertSimpleTargetsWithoutEquivalence(self.inputShapes, updatedIRM, InputNodeShapesSimpleTargetWithoutEquivalence)
 
         # Insert compound shapes without equivalence from input shape graph in the updated IRM
-        #self.insertCompoundInputTargetsWithoutEquivalence(self.inputShapes, updatedIRM, IrmCompoundTargetWithoutEquivalence)
         self.insertCompoundInputTargetsWithoutEquivalence(self.inputShapes, updatedIRM, InputCompoundTargetWithoutEquivalence)
 
         # Insert compound shapes without equivalence from the  current IRMin the updated IRM
-        #self.insertCompoundIRMTargetsWithoutEquivalence(self.SHACL, updatedIRM, InputCompoundTargetWithoutEquivalence)
         self.insertCompoundIRMTargetsWithoutEquivalence(self.SHACL, updatedIRM, IrmCompoundTargetWithoutEquivalence)
 
         # Insert the integration of the equivalent simple shapes
         self.integrateSimpleShapesWithEquivalence(self.inputShapes, self.SHACL, updatedIRM, IrmNodeShapesSimpleTargetWithEquivalence, InputNodeShapesSimpleTargetWithEquivalence)
 
-        #print('graph before integration')
-        #for triple in updatedIRM:
-        #    print(triple)
         # Insert the integration of the equivalent compound shapes
         self.integrateCompoundShapesWithEquivalence(self.inputShapes, self.SHACL, updatedIRM, IrmCompoundTargetWithEquivalence, InputCompoundTargetWithEquivalence)
-
-        #print('graph after integration')
-        #for triple in updatedIRM:
-        #    print(triple)
 
         # Set all the node shapes with sh:deactivated True
         self.deactivateShapesOfUpdatedIRM(updatedIRM)
