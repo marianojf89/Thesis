@@ -1,0 +1,330 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> .
+
+ex:Chamonix_TeachingSchoolShape
+   a sh:NodeShape ;
+sh:targetClass ex:TeachingSchool ; 
+sh:property [
+   sh:path ex:has_meetingPoint ;
+   sh:minCount 1;
+   sh:maxCount 8 ; 
+   sh:nodeKind sh:Literal ;
+   sh:maxLength 50 ; 
+   ] ;
+sh:property [
+   sh:path ex:offers_discipline ;
+   sh:minCount 5 ;
+   sh:nodeKind sh:Literal ; 
+   sh:maxLength 50 ; ] ;
+sh:property [
+   sh:path ex:opens_at ;
+   sh:nodeKind sh:Literal ;
+   sh:minInclusive '08:00:00' ; ] ;
+sh:property [
+   sh:path ex:closes_at ;
+   sh:nodeKind sh:Literal ;
+   sh:maxInclusive '15:00:00' ; ] ;
+sh:property [
+   sh:path ex:gives_lesson ;
+   sh:minCount 1;
+   sh:maxCount 3 ; 
+   sh:nodeKind sh:IRI ; ] .
+
+ex:Chamonix_GroupLessonShape
+   a sh:NodeShape ;
+sh:targetClass ex:GroupLesson ; 
+sh:property [
+   sh:path ex:start_time ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:nodeKind sh:Literal ; 
+   sh:minInclusive '08:30:00' ;
+   sh:maxInclusive '13:30:00' ;
+   ] ;
+sh:property [
+   sh:path ex:end_time ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:nodeKind sh:Literal ; 
+   sh:minInclusive '09:30:00' ;
+   sh:maxInclusive '14:30:00' ; ] ;
+sh:property [
+   sh:path ex:has_teachingLevel ;
+   sh:minCount 1 ; 
+   sh:maxCount 2 ; 
+   sh:nodeKind sh:IRI ; ] ;
+sh:property [
+   sh:path ex:given_in_language ;
+   sh:minCount 1 ; 
+   sh:maxCount 2 ; 
+   sh:nodeKind sh:Literal ; 
+   sh:in ("French" "English") ; ] ;
+sh:property [
+   sh:path ex:has_students ;
+   sh:minCount 3 ; 
+   sh:maxCount 6 ; 
+   sh:nodeKind sh:IRI ; ] ;
+sh:property [
+   sh:path ex:belongs_to_discipline ;
+   sh:nodeKind sh:IRI ;
+   sh:class ex:Discipline ;
+   sh:in (ex:nordic ex:backCountry ex:snowShoeing) ;
+   sh:minCount 1 ;
+   sh:maxCount 1 ; ] ;
+sh:property [
+   sh:path ex:starts_in_place ;
+   sh:nodeKind sh:IRI ;
+   sh:minCount 1 ;
+   sh:maxCount 2 ; ] .
+
+ex:Chamonix_StudentShape
+   a sh:NodeShape ;
+sh:targetClass ex:Student ; 
+sh:property [
+   sh:path ex:learned_level ;
+   sh:nodeKind sh:IRIOrLiteral ; 
+   sh:in ('Intermediate' 'Advanced') ; ] ;
+sh:property [
+   sh:path ex:learns_in_language ;
+   sh:minCount 1 ; 
+   sh:nodeKind sh:IRI ; ] ;
+sh:property [
+   sh:path ex:practice_discipline ;
+   sh:minCount 1 ; 
+   sh:maxCount 5 ;
+   sh:nodeKind sh:IRIOrLiteral ; ] ;
+sh:property [
+   sh:path ex:name ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ;
+   sh:nodeKind sh:Literal ;
+   sh:maxLength 100 ; ] ;
+sh:property [
+   sh:path ex:birthday ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ;
+   sh:nodeKind sh:Literal ;  
+   sh:maxLength 8 ; ] ;
+sh:property [
+   sh:path ex:has_age ;
+   sh:minCount 1 ; 
+   sh:nodeKind sh:Literal ; 
+   sh:minInclusive 18 ; 
+   sh:maxInclusive 50 ;] ; 
+sh:property [
+   sh:path ex:has_insurance ;
+   sh:minCount 1 ;
+   sh:class ex:Insurance ; 
+   sh:in (ex:mid ex:high) ; ] ;
+sh:property [
+   sh:path ex:inscribed_in_lesson ;
+   sh:nodeKind sh:IRI ; 
+   sh:or ( 
+      [sh:class ex:GroupLesson]
+      [sh:class ex:PrivateLesson]
+   ) ;
+   ] .
+
+ex:Chamonix_MeetingPointShape
+   a sh:NodeShape ;
+sh:targetClass ex:MeetingPoint ; 
+sh:property [
+   sh:path ex:Meeting_point_of ;
+   sh:nodeKind sh:Literal ; 
+   sh:minCount 1 ; ] ;
+sh:property [
+   sh:path ex:Mp_address ;
+   sh:nodeKind sh:Literal ; 
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; ] .
+
+ex:Chamonix_PrivateLessonShape
+ a sh:NodeShape ;
+sh:targetClass ex:PrivateLesson ; 
+sh:property [
+   sh:path ex:has_instructor ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:class ex:Instructor ; ] ;
+sh:property [ 
+   sh:path ex:given_in_language ;
+   sh:minCount 1 ; 
+   sh:hasValue (ex:French) ; ] ;
+sh:property [ 
+   sh:path ex:belongs_to_discipline ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; ] ;
+sh:property [ 
+   sh:path ex:has_students ;
+   sh:minCount 1 ; 
+   sh:maxCount 2 ; 
+   sh:class ex:Student ; ] .
+
+ex:Chamonix_InsuranceShape
+ a sh:NodeShape ;
+sh:targetClass ex:Insurance ; 
+sh:property [ 
+   sh:path ex:has_description ;
+   sh:minCount 1 ; 
+   sh:minLength 50 ;
+   sh:maxLength 150 ; ] ;
+sh:property [ 
+   sh:path ex:coverage_level ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:nodeKind sh:Literal ;
+   sh:in ('mid' 'high') ; ] ;
+sh:property [ 
+   sh:path ex:start_validity ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:nodeKind sh:Literal ;
+   ] ;
+sh:property [ 
+   sh:path ex:end_validity ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ; 
+   sh:nodeKind sh:Literal ;
+   ] .
+
+ex:Chamonix_InstructorShape
+ a sh:NodeShape ;
+sh:targetClass ex:Instructor ; 
+sh:property [
+   sh:path ex:name ;
+   sh:minCount 1 ; 
+   sh:maxLength 150 ; 
+   ] ;
+sh:property [ 
+   sh:path ex:teaches_in_language ;
+   sh:minCount 2 ; 
+   sh:nodeKind sh:IRI ; 
+   sh:hasValue (ex:French) ; 
+   ] ;
+sh:property [ 
+   sh:path ex:teaches_level ;
+   sh:class ex:TeachingLevel ;
+   sh:hasValue (ex:professional) ;
+] ;
+sh:property [ 
+   sh:path ex:teaches_in_school ;
+   sh:minCount 1 ; 
+   sh:maxCount 1 ;
+   sh:class ex:TeachingSchool ; ] .
+
+ex:Chamonix_PackageShape
+   a sh:NodeShape ;
+sh:targetClass ex:Package ; 
+sh:property [
+   sh:path ex:has_service ;
+   sh:nodeKind sh:IRI ; 
+] .
+
+ex:Chamonix_DisciplineShape
+   a sh:NodeShape ;
+sh:nodeKind ex:IRIOrLiteral .
+
+ex:Chamonix_LanguageShape
+   a sh:NodeShape ;
+sh:property[
+   sh:path ex:has_country_provenance ;
+   sh:nodeKind sh:IRIOrLiteral ;
+] .
+
+ex:Chamonix_ServiceShape
+   a sh:NodeShape ;
+sh:targetClass ex:Service ;
+sh:nodeKind sh:IRI .
+
+ex:Chamonix_CertificateShape
+   a sh:NodeShape ;
+sh:targetClass ex:Certificate ;
+sh:property[
+   sh:path ex:related_discipline ;
+   sh:minCount 1 ;
+] .
+
+ex:Chamonix_HotelShape
+   a sh:NodeShape ;
+sh:targetClass ex:Hotel ;
+sh:property[
+   sh:path ex:address ;
+   sh:maxLength 100 ;
+] .
+
+ex:Chamonix_KindergartenShape
+   a sh:NodeShape ;
+sh:targetClass ex:Kindergarten ;
+sh:property[
+   sh:path ex:ages_welcome ;
+   sh:minInclusive 1 ;
+   sh:maxInclusive 6 ;
+] .
+
+ex:Chamonix_CompetitionLessonShape
+   a sh:NodeShape ;
+sh:targetClass ex:CompetitionLesson ;
+sh:property[
+   sh:path ex:competitionAssociated ;
+   sh:nodeKind sh:IRIOrLiteral ;
+   sh:minCount 1 ;
+] ;
+sh:property[
+   sh:path ex:discipline_associated ;
+   sh:minCount 1 ;
+] .
+
+ex:Chamonix_TestLessonShape
+   a sh:NodeShape ;
+sh:targetClass ex:TestLesson ;
+sh:property[
+   sh:path ex:lesson_type ;
+   sh:nodeKind sh:IRIOrLiteral ;
+] .
+
+ex:Chamonix_MealShape
+   a sh:NodeShape ;
+sh:targetClass ex:Meal ;
+sh:property[
+   sh:path ex:description ;
+   sh:maxLength 100;
+] ;
+sh:property[
+   sh:path ex:start_serving ;
+   sh:minInclusive '08:00:00' ;
+] ;
+sh:property[
+   sh:path ex:finish_serving ;
+   sh:maxInclusive '14:00:00' ;
+] .
+
+ex:Chamonix_SkiRentalShape
+   a sh:NodeShape ;
+sh:targetClass ex:SkiRental ;
+sh:property[
+   sh:path ex:available_clothes ;
+   sh:in ('Gloves' 'Trousers' 'Jacket' 'Boots' 'Helmet') ;
+] ;
+sh:property[
+   sh:path ex:available_utils ;
+   sh:in ('Ski' 'Sticks' 'Snowboard') ;
+] ; 
+sh:property[
+   sh:path ex:related_to_discipline ;
+   sh:in (ex:nordic ex:backCountry ex:snowShoeing) ;
+] .
+
+ex:Chamonix_SeasonShape
+   a sh:NodeShape ;
+sh:targetClass ex:Season ;
+sh:property[
+   sh:path ex:has_start_date ;
+   sh:nodeKind sh:Literal ;
+] ;
+sh:property[
+   sh:path ex:has_end_date ;
+   sh:nodeKind sh:Literal ;
+] .
