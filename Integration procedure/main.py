@@ -1,6 +1,7 @@
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
 from typing import List, Dict
 from rdflib.collection import Collection
+import time
 
 # Class which describes the functions related to a shape integration object.
 class ShapeIntegration():
@@ -124,6 +125,8 @@ class ShapeIntegration():
                             updatedIRM.add((nodeShapeIRI,self.shaclNS["property"],s1))
                 if insertTriple == True:
                     for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
+                        if p2 == self.shaclNS.group:
+                            updatedIRM.add((URIRef(o2), self.rdfSyntax.type, self.shaclNS.PropertyGroup))
                         if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
                             updatedIRM.add((s2,p2,o2))
                         elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
@@ -1242,13 +1245,15 @@ class ShapeIntegration():
         # Set all the node shapes with sh:deactivated True
         self.deactivateShapesOfUpdatedIRM(updatedIRM)
 
-        updatedIRM.serialize('C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/updatedIRM.ttl', format='turtle')
+        updatedIRM.serialize('C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Annecy first/Execution - Chamonix second/updatedIRM.ttl', format='turtle')
 
 # Main program. Loads the input shape graphs in a List of shape graphs. (SCOOP)
 if __name__ == "__main__":
     
-    InputShape1Path = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/Annecy.shacl'
-    currentIrmPath = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Chamonix first/Execution - Annecy second/currentIRM.ttl'
+    start_time = time.time()
+
+    InputShape1Path = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Annecy first/Execution - Chamonix second/Chamonix.shacl'
+    currentIrmPath = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Annecy first/Execution - Chamonix second/currentIRM.ttl'
 
     InputShapeGraph = Graph()
     
@@ -1256,3 +1261,7 @@ if __name__ == "__main__":
 
     shapeIntegrator = ShapeIntegration(InputShapeGraph, currentIrmPath)
     shapeIntegrator.integration()
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Execution time: {execution_time:.4f} seconds")
