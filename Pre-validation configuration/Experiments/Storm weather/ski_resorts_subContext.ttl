@@ -1,0 +1,13 @@
+@prefix ns1: <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:GroupLesson a owl:class ;
+    ns1:has_students [ owl:maxCardinality "6"^^xsd:nonNegativeInteger ] .
+
+ns1:PrivateLesson a owl:class ;
+    ns1:has_students [ owl:maxCardinality "2"^^xsd:nonNegativeInteger ] .
+
+ns1:Student a owl:class ;
+    ns1:has_insurance [ owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+

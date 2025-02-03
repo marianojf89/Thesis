@@ -1,0 +1,22 @@
+
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sup> a sh:NodeShape ;
+    sh:deactivated false ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> ;
+    sh:property [ 
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> ;
+            sh:in ( "ex:high" "ex:low" "ex:mid" ) ;
+            sh:minCount 1 ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance> ; ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sub1_1> a sh:NodeShape ;
+    sh:deactivated false ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sup> ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> ;
+    sh:property [ 
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> ;
+            sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance> ;
+            sh:in ( "ex:high" "ex:mid" ) ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ; ] .
