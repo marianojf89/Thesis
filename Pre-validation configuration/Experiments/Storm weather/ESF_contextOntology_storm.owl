@@ -46,9 +46,9 @@ xsd:time rdf:type rdfs:Datatype .
 #################################################################
 
 
-###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology#has_insurance
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance
 
-<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology#has_insurance> rdf:type owl:ObjectProperty ;
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> rdf:type owl:ObjectProperty ;
                                                                                       
                                                                                       rdfs:range :Insurance ;
                                                                                       
@@ -1327,7 +1327,7 @@ xsd:time rdf:type rdfs:Datatype .
          owl:equivalentClass [ rdf:type owl:Class ;
                                owl:intersectionOf ( :Student
                                                     [ rdf:type owl:Restriction ;
-                                                      owl:onProperty <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology#has_insurance> ;
+                                                      owl:onProperty <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> ;
                                                       owl:minCardinality "1"^^xsd:nonNegativeInteger
                                                     ]
                                                   )
