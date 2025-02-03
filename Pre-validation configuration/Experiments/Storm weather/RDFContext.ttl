@@ -1,0 +1,4 @@
+<http://www.semanticweb.org/esfvel_context#GoodWeather> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.semanticweb.org/esfvel_context#Context> .
+<http://www.semanticweb.org/esfvel_context#GoodWeather> <http://www.semanticweb.org/esfvel_context#Current_Status> <http://www.semanticweb.org/esfvel_context#Inactive> .
+<http://www.semanticweb.org/esfvel_context#Storm> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.semanticweb.org/esfvel_context#Context> .
+<http://www.semanticweb.org/esfvel_context#Storm> <http://www.semanticweb.org/esfvel_context#Current_Status> <http://www.semanticweb.org/esfvel_context#Active> .
