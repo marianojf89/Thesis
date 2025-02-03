@@ -1,18 +1,18 @@
 from rdflib import Graph, Namespace, URIRef, Literal, BNode
+import time
+
+start_time = time.time()
 
 rdfSyntax = Namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#')
 owlSyntax = Namespace('http://www.w3.org/2002/07/owl#')
 shaclSyntax = Namespace('http://www.w3.org/ns/shacl#')
 
 ## Set input files
-InputRDFdata = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/RDFContext.ttl'
-#InputOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Ski_resorts.owl'
-InputOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Ontologies/minCardinalityExample/Ski_resorts.owl'
-OutputSubOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/subContextOntology/ski_resorts_subContext.ttl'
-#CurrentIRM = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Resorts_integrated_shapes.shacl'
-#CurrentIRM = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Convert OWL to SHACL/TEST_context-IRM_qualifiedShape_groupLesson-has_student.shacl'
-CurrentIRM = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Convert OWL to SHACL/TEST_context-IRM_detectGroupWithMultipleShapesAllDeactivated.shacl'
-updatedIRMfile = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Use case examples/Use case example 4/Outputs/updatedIRM.shacl'
+InputRDFdata = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/RDFContext.ttl'
+InputOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/ESF_contextOntology_storm.owl'
+OutputSubOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/ski_resorts_subContext.ttl'
+CurrentIRM = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/updatedIRM.ttl'
+updatedIRMfile = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/activatedIRM_storm.shacl'
 
 ### Set the RDF graph which has the active context
 InputRDFdataGraph = Graph()
@@ -26,14 +26,6 @@ InputOntologyContextGraph = Graph().parse(InputOntologyContext, format='turtle')
 InputCurrentIRMGraph = Graph()
 InputCurrentIRMGraph = Graph().parse(CurrentIRM, format='turtle')
 
-# GRAPH FOR TESTING CANDIDATE SHAPES CONTEXTUALIZED
-#TESTINGInputCurrentIRMGraph = Graph()
-#TESTINGInputCurrentIRMGraph = Graph().parse(CurrentIRM, format='turtle')
-
-#print('Content of the IRM')
-#for s5,p5,o5 in InputCurrentIRMGraph:
-#     print(s5,p5,o5)
-
 ### Query for retrieving the active context from the RDF
 firstContextQuery = """
 PREFIX : <http://www.semanticweb.org/esfvel_context#>
@@ -43,10 +35,8 @@ WHERE { ?subject a :Context ;
 :Current_Status :Active . }"""
 
 ## Retrieve the active context from the RDF
-## POSSIBLE FIX: it would be better to obtain the name of the individual without the complete IRI (e.g. only GoodWeather)
 qres = InputRDFdataGraph.query(firstContextQuery)
 for row in qres:
-    #print(f"{row.subject}") # Prints the retrieved context
     activeContext = row.subject
 
 #print(activeContext)
@@ -104,9 +94,6 @@ for s,p,o in InputOntologyContextSUBGraph.triples((None, rdfSyntax.type, None)):
                      #print(s,p1,p2,o2)
                      subContextOntologyRetrieved.append([p2,o2])
                 subContextOntologyRetrieved.append(['end','end'])
-                     
-#print('The list contains the following')
-print(subContextOntologyRetrieved)
 
 ### Query for retrieveing those shapes from the IRM which accomplish the context characteristics
 IRMcontextBaseQuery = """
@@ -233,9 +220,6 @@ for listPosition in subContextOntologyRetrieved:
                  # The values in ?focusClass and ?path represent the current respective group (focusClass, path)
                  # The values in retrieveIRMcontext are the nodeShapeIRIs which must be activated.
                  # The rest of the nodeShapeIRIs in the current respective group (focusClass, path) (complement shapes) must be deactivated.
-                 # TESTING PRINTING
-                 for shape in retrieveIRMcontext:
-                      print(shape)
                  if len(retrieveIRMcontext) > 0:
                     nodeShapeIRIcomplement = ''
                     ## Activation of the shapes that accomplished the context characteristics.
@@ -273,9 +257,22 @@ IRMuniqueGroupShapes = InputCurrentIRMGraph.query(IRMdetectUniqueGroupShapesQuer
 for uniqueShape in IRMuniqueGroupShapes:
      InputCurrentIRMGraph.update(IRMupdateQuery, initBindings={"nodeShapeIRI": uniqueShape[0]})
 
-#print('Updated graph')
-#for triple in InputCurrentIRMGraph:
-#     print(triple)
+### Query for detecting the simple node shapes
+IRMdetectSimpleNodeShapesQuery = """
+PREFIX sh: <http://www.w3.org/ns/shacl#> 
+PREFIX ex: <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> 
+
+SELECT ?nodeShape
+WHERE { ?nodeShape a sh:NodeShape . 
+  FILTER NOT EXISTS { ?nodeShape ?property ?object .
+  ?object sh:group ?groupValue . } .
+}
+"""
+
+## Activate the simple node shapes
+IRMsimpleNodeShapes = InputCurrentIRMGraph.query(IRMdetectSimpleNodeShapesQuery)
+for uniqueShape in IRMsimpleNodeShapes:
+     InputCurrentIRMGraph.update(IRMupdateQuery, initBindings={"nodeShapeIRI": uniqueShape[0]})
 
 ### Query for retrieving those groups which need a decision from the user, meaning those shapes which are active and are not the unique active shapes in their respective group
 IRMcandidateGroupShapesFiltered = """
@@ -312,13 +309,10 @@ FILTER( str(?path) = str(?varInputPath)  ) .
 ## ** The respective nodeShapes are saved in the list candidateNodeShapesContextualized (*** This list will be sent to the user ***)
 IRMgroupWithCandidatesContextualized = InputCurrentIRMGraph.query(IRMcandidateGroupShapesFiltered)
 candidateNodeShapesContextualized = []
-#print('Candidate contextualized groups')
 for group in IRMgroupWithCandidatesContextualized:
-     #print(group)
      NodeShapesContextualized = InputCurrentIRMGraph.query(IRMcandidateShapesFiltered, initBindings={"varInputClass": Literal(group[0]), "varInputPath": Literal(group[1])})
      for nodeShape in NodeShapesContextualized:
           candidateNodeShapesContextualized.append([nodeShape[0]])
-
 
 ### Retrieve the shapes from the groups which have all the shapes deactivated, meaning candidate shapes of a group which wasn't filtered by the context.
 ## Firstly retrieve those groups which have more than one shape (focusClass,pathValue)
@@ -351,7 +345,6 @@ for group2 in groupsWithMultipleShapesAllDeactivated:
      for nodeShape in groupNodeShapes:
           nodeShapesOfGroupsWithMultipleShapesAllDeactivated.append([nodeShape[0]])
 
-
 ### ...
 ### ...
 
@@ -378,19 +371,30 @@ FILTER( str(?nodeShape) != str(?selectedNodeShape)  ) .
 """
 
 ## Find those candidate shapes which were not selected by the user
-#for usersDecision in candidateShapeSelected:
-#     notSelectedNodeShapes = InputCurrentIRMGraph.query(IRMcandidateShapesNotSelected, initBindings={"varInputClass": Literal(usersDecision[1]), "varInputPath": Literal(usersDecision[2]), "selectedNodeShape": Literal(usersDecision[0])})
+candidateShapeSelected = []
+# Simulation of the candidateShapeSelected list that would be received from the user
+candidateShapeSelected.append(['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sup', 'http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student', 'http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance'])
+for usersDecision in candidateShapeSelected:
+     notSelectedNodeShapes = InputCurrentIRMGraph.query(IRMcandidateShapesNotSelected, initBindings={"varInputClass": Literal(usersDecision[1]), "varInputPath": Literal(usersDecision[2]), "selectedNodeShape": Literal(usersDecision[0])})
 ## Deactivate those candidate shapes which were not selected by the user
-#for notSelectedNodeShapeIRI in notSelectedNodeShapes:
-#     InputCurrentIRMGraph.update(IRMupdateDeactivateComplementQuery, initBindings={"nodeShapeIRI": notSelectedNodeShapeIRI[0]})
+for notSelectedNodeShapeIRI in notSelectedNodeShapes:
+     InputCurrentIRMGraph.update(IRMupdateDeactivateComplementQuery, initBindings={"nodeShapeIRI": notSelectedNodeShapeIRI[0]})
 
 
 ### In the case of the nodeShapesOfGroupsWithMultipleShapesAllDeactivated list, the candidate shapes are deactivated. In consequence, the shapes which are selected by the user must be activated.
 ## The answer from the user is received as a list notFilteredGroupShapeSelected = [selectedNodeShapeIRI],[selectedNodeShapeIRI2],...
 
+# Simulation of the nodeShapesOfGroupsWithMultipleShapesAllDeactivated list that would be received from the user
+notFilteredGroupShapeSelected = []
+notFilteredGroupShapeSelected = ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated_sup'],['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline_sup'],['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sup'], ['http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sup']
+
 ## Activate those shapes of the not filtered groups which were selected by the user
-#for SelectedNodeShapeIRI in notFilteredGroupShapeSelected:
-#     InputCurrentIRMGraph.update(IRMupdateQuery, initBindings={"nodeShapeIRI": SelectedNodeShapeIRI[0]})
+for SelectedNodeShapeIRI in notFilteredGroupShapeSelected:
+     InputCurrentIRMGraph.update(IRMupdateQuery, initBindings={"nodeShapeIRI": SelectedNodeShapeIRI[0]})
 
 ## Save the activated version of the IRM in the file
 InputCurrentIRMGraph.serialize(destination=updatedIRMfile,format="ttl")
+
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time:.4f} seconds")
