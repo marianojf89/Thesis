@@ -296,9 +296,9 @@ xsd:time rdf:type rdfs:Datatype .
 
 
 
-###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_student
+###  http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students
 
-:has_student rdf:type owl:ObjectProperty ;
+:has_students rdf:type owl:ObjectProperty ;
              
              rdfs:domain :GroupLesson ,
                          :GroupLessonOcurrence .
@@ -1071,7 +1071,7 @@ xsd:time rdf:type rdfs:Datatype .
              owl:equivalentClass [ rdf:type owl:Class ;
                                    owl:intersectionOf ( :GroupLesson
                                                         [ rdf:type owl:Restriction ;
-                                                          owl:onProperty :has_student ;
+                                                          owl:onProperty :has_students ;
                                                           owl:maxCardinality "6"^^xsd:nonNegativeInteger
                                                         ]
                                                       )
@@ -1095,7 +1095,7 @@ xsd:time rdf:type rdfs:Datatype .
                                         owl:allValuesFrom :Instructor
                                       ] ,
                                       [ rdf:type owl:Restriction ;
-                                        owl:onProperty :has_student ;
+                                        owl:onProperty :has_students ;
                                         owl:onClass :Student ;
                                         owl:maxQualifiedCardinality "8"^^xsd:nonNegativeInteger
                                       ] ,
@@ -1262,7 +1262,7 @@ xsd:time rdf:type rdfs:Datatype .
                owl:equivalentClass [ rdf:type owl:Class ;
                                      owl:intersectionOf ( :PrivateLesson
                                                           [ rdf:type owl:Restriction ;
-                                                            owl:onProperty :has_student ;
+                                                            owl:onProperty :has_students ;
                                                             owl:minCardinality "2"^^xsd:nonNegativeInteger
                                                           ]
                                                         )
