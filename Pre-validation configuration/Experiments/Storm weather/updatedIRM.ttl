@@ -1,0 +1,941 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Certificate_related_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Certificate_related_discipline> ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/related_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Certificate> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/competitionAssociated> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_discipline_associated_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_discipline_associated> ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/discipline_associated> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline> ;
+            sh:in ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/backCountry" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/nordic" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/snowShoeing" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/belongs_to_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time> ;
+            sh:maxCount 1 ;
+            sh:maxInclusive "14:30:00" ;
+            sh:maxLength 8 ;
+            sh:minCount 1 ;
+            sh:minInclusive "09:30:00" ;
+            sh:minLength 8 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/end_time> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language> ;
+            sh:in ( "French" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sub1_2> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language> ;
+            sh:in ( "English" "French" ) ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sub2_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language__sub1_1> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language> ;
+            sh:in ( "French" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students> ;
+            sh:maxCount 6 ;
+            sh:minCount 5 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teachingLevel> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time> ;
+            sh:maxCount 1 ;
+            sh:maxInclusive "13:30:00" ;
+            sh:maxLength 8 ;
+            sh:minCount 1 ;
+            sh:minInclusive "08:30:00" ;
+            sh:minLength 8 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/start_time> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_starts_in_place_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_starts_in_place> ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/starts_in_place> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address> ;
+            sh:maxLength 100 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/address> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name> ;
+            sh:maxCount 1 ;
+            sh:maxLength 100 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/name> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_discipline> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_discipline> ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language> ;
+            sh:hasValue ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:minCount 2 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in_school> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLevel> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level> ;
+            sh:hasValue ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/professional" ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level> ;
+            sh:in ( "high" "mid" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/coverage_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_end_validity_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_end_validity> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/end_validity> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description> ;
+            sh:maxCount 1 ;
+            sh:maxLength 150 ;
+            sh:minCount 1 ;
+            sh:minLength 50 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_description> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_start_validity_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_start_validity> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/start_validity> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome> ;
+            sh:maxInclusive 6 ;
+            sh:minInclusive 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/ages_welcome> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_description_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_description> ;
+            sh:maxLength 100 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/description> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_finish_serving_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_finish_serving> ;
+            sh:maxInclusive "14:00:00" ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/finish_serving> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_start_serving_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_start_serving> ;
+            sh:minInclusive "08:00:00" ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/start_serving> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of> ;
+            sh:minCount 2 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meeting_point_of> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Mp_address_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Mp_address> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Mp_address> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance> ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_service> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/belongs_to_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language> ;
+            sh:hasValue ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_instructor_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_instructor> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_instructor> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students> ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_teaching_level_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_teaching_level> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teaching_level> ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_end_date_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_end_date> ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_end_date> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_start_date_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_start_date> ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_start_date> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Service_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Service> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_clothes_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_clothes> ;
+            sh:in ( "Boots" "Gloves" "Helmet" "Jacket" "Trousers" ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/available_clothes> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils> ;
+            sh:in ( "Ski" "Snowboard" "Sticks" ) ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/available_utils> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_related_to_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_related_to_discipline> ;
+            sh:in ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/backCountry" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/nordic" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/snowShoeing" ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/related_to_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_birthday_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_birthday> ;
+            sh:maxCount 1 ;
+            sh:maxLength 8 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/birthday> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age> ;
+            sh:maxInclusive 50 ;
+            sh:minCount 1 ;
+            sh:minInclusive 18 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_age> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sup> ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance> ;
+            sh:in ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/high" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/mid" ) ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson> ;
+            sh:nodeKind sh:IRI ;
+            sh:or ( [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> ] [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> ] ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/inscribed_in_lesson> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level> ;
+            sh:in ( "Advanced" "Intermediate" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/learned_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learns_in_language_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learns_in_language> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/learns_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_name_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_name> ;
+            sh:maxCount 1 ;
+            sh:maxLength 100 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/name> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_practice_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_practice_discipline> ;
+            sh:maxCount 5 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/practice_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:nodeKind sh:IRIOrLiteral ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Country> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance> ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at> ;
+            sh:minInclusive "20:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/closes_at> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sub1_2> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at> ;
+            sh:maxInclusive "15:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/closes_at> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_gives_lesson_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_gives_lesson> ;
+            sh:maxCount 3 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/gives_lesson> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sub2_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sub1_1> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint> ;
+            sh:maxCount 6 ;
+            sh:maxLength 50 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_meetingPoint> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sub2_2> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sub1_1> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint> ;
+            sh:maxCount 6 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_meetingPoint> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sub2_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sub1_1> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline> ;
+            sh:maxLength 50 ;
+            sh:minCount 5 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sub2_2> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sub1_1> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline> ;
+            sh:minCount 5 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_service_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_service> ;
+            sh:maxCount 6 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_service> ] .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at> ;
+            sh:minInclusive "08:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/opens_at> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type> ;
+            sh:maxLength 50 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/lesson_type> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sub1_2> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type> ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/lesson_type> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Certificate_related_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated> ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/competitionAssociated> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_discipline_associated> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/belongs_to_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time> ;
+            sh:maxCount 1 ;
+            sh:maxInclusive "18:30:00" ;
+            sh:minCount 1 ;
+            sh:minInclusive "09:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/end_time> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students> ;
+            sh:maxCount 10 ;
+            sh:minCount 3 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel> ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teachingLevel> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time> ;
+            sh:maxCount 1 ;
+            sh:maxInclusive "17:30:00" ;
+            sh:minCount 1 ;
+            sh:minInclusive "08:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/start_time> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_starts_in_place> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address> ;
+            sh:maxLength 100 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/address> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name> ;
+            sh:maxLength 150 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/name> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language> ;
+            sh:hasValue ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school> ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_in_school> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLevel> ;
+            sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level> ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level> ;
+            sh:in ( "high" "low" "mid" ) ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/coverage_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_end_validity> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description> ;
+            sh:maxLength 200 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_description> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_start_validity> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome> ;
+            sh:maxInclusive 10 ;
+            sh:minInclusive 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/ages_welcome> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_description> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_finish_serving> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meal_start_serving> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of> ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Meeting_point_of> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Mp_address> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service> ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_service> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline> ;
+            sh:maxCount 1 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/belongs_to_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language> ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_instructor> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students> ;
+            sh:maxCount 3 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_teaching_level> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_end_date> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_start_date> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_clothes> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils> ;
+            sh:in ( "Ski" "Snowboard" "Sticks" ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/available_utils> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_related_to_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_birthday> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age> ;
+            sh:maxInclusive 100 ;
+            sh:minCount 1 ;
+            sh:minInclusive 5 ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_age> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance> ;
+            sh:in ( "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/high" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/low" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/mid" ) ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_insurance> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson> ;
+            sh:nodeKind sh:IRI ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/inscribed_in_lesson> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level> ;
+            sh:in ( "Advanced" "Beginner" "Intermediate" ) ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/learned_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learns_in_language> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_name> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_practice_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_gives_lesson> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint> ;
+            sh:maxCount 8 ;
+            sh:minCount 1 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_meetingPoint> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline> ;
+            sh:minCount 2 ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_service> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at> ;
+            sh:minInclusive "07:00:00" ;
+            sh:nodeKind sh:Literal ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/opens_at> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/CompetitionLesson_competitionAssociated> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_end_time> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language> ;
+            sh:in ( "English" "French" "http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/French" ) ;
+            sh:maxCount 2 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/given_in_language> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_students> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_has_teachingLevel> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_start_time> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Hotel_address> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_name> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_school> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_level> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_coverage_level> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Insurance_has_description> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Kindergarten_ages_welcome> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Meeting_point_of> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_belongs_to_discipline> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_given_in_language> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_students> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/SkiRental_available_utils> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_age> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_has_insurance> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at> ;
+            sh:nodeKind sh:Literal ;
+            sh:or ( [ sh:maxInclusive "15:00:00" ] [ sh:minInclusive "20:00:00" ] ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/closes_at> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint> ;
+            sh:maxCount 6 ;
+            sh:minCount 1 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_meetingPoint> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sub1_1> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline_sup> ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline> ;
+            sh:minCount 5 ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type> ;
+            sh:or ( [ sh:nodeKind sh:IRIOrLiteral ] [ sh:maxLength 50 ] ) ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/lesson_type> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TestLesson_lesson_type> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_given_in_language> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_discipline> a sh:PropertyGroup .
+
