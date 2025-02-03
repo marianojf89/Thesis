@@ -88,25 +88,26 @@ class ShapeIntegration():
                     for s1, p1, o1 in shapeGraph.triples((o, None, None)):
                         if p1 in self.propertyPathNS and o1 == pathValueIRI:
                             insertTriple = True
+                            blankNode = s1
                             updatedIRM.add((s1,self.shaclNS.group,URIRef(groupIdIRI)))
                             updatedIRM.add((URIRef(groupIdIRI), self.rdfSyntax.type, self.shaclNS.PropertyGroup))
                             updatedIRM.add((URIRef(nodeShapeIrmIRI),self.shaclNS["property"],s1))
-                if insertTriple == True:
-                    for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
-                        if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
-                            updatedIRM.add((s2,p2,o2))
-                        elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
-                            # Get the content of the RDF lists that contain the values of sh:in
-                            inputRDFlist = self.getElementsOfRDFlist(self.inputShapes, o2)
-                            values = sorted(inputRDFlist)
-                            list_node = self.createRDFListFromList(values, updatedIRM)
-                            updatedIRM.add((s2, p2, list_node))
-                        elif p2 == self.shaclNS['or']:
-                            # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
-                            inputRDFlist = self.getElementsOfRDFlistOr(self.inputShapes, o2) 
-                            list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
-                            updatedIRM.add((s2, p2, list_node_superShapeOr))
-                    break
+            if insertTriple == True:
+                for s2, p2, o2 in shapeGraph.triples((blankNode, None, None)):
+                    if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
+                        updatedIRM.add((s2,p2,o2))
+                    elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
+                        # Get the content of the RDF lists that contain the values of sh:in
+                        inputRDFlist = self.getElementsOfRDFlist(self.inputShapes, o2)
+                        values = sorted(inputRDFlist)
+                        list_node = self.createRDFListFromList(values, updatedIRM)
+                        updatedIRM.add((s2, p2, list_node))
+                    elif p2 == self.shaclNS['or']:
+                        # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
+                        inputRDFlist = self.getElementsOfRDFlistOr(self.inputShapes, o2) 
+                        list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
+                        updatedIRM.add((s2, p2, list_node_superShapeOr))
+                #break
 
             
     # This function receives two shape graphs, one that is part of the integration (IRM) and another that is the outcome, and a list of compound shapes [[nodeShapeIRI, targetIRI, pathValueIRI]] which don't have an equivalence. Furthermore, the objective is to insert these in the updated version of the IRM.
@@ -117,30 +118,31 @@ class ShapeIntegration():
             insertTriple = False
             for s, p, o in shapeGraph.triples((nodeShapeIRI, None, None)):
                 if p != self.shaclNS["property"]:
-                    updatedIRM.add((s,p,o))
+                    updatedIRM.add((nodeShapeIRI,p,o))
                 else:
                     for s1, p1, o1 in shapeGraph.triples((o, None, None)):
                         if p1 in self.propertyPathNS and o1 == pathValueIRI:
                             insertTriple = True
+                            blankNode = s1
                             updatedIRM.add((nodeShapeIRI,self.shaclNS["property"],s1))
-                if insertTriple == True:
-                    for s2, p2, o2 in shapeGraph.triples((s1, None, None)):
-                        if p2 == self.shaclNS.group:
-                            updatedIRM.add((URIRef(o2), self.rdfSyntax.type, self.shaclNS.PropertyGroup))
-                        if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
-                            updatedIRM.add((s2,p2,o2))
-                        elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
-                            # Get the content of the RDF lists that contain the values of sh:in
-                            inputRDFlist = self.getElementsOfRDFlist(self.SHACL, o2)
-                            values = sorted(inputRDFlist)
-                            list_node = self.createRDFListFromList(values, updatedIRM)
-                            updatedIRM.add((s2, p2, list_node))
-                        elif p2 == self.shaclNS['or']:
-                            # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
-                            inputRDFlist = self.getElementsOfRDFlistOr(self.SHACL, o2) 
-                            list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
-                            updatedIRM.add((s2, p2, list_node_superShapeOr))
-                    break
+            if insertTriple == True:
+                for s2, p2, o2 in shapeGraph.triples((blankNode, None, None)):
+                    if p2 == self.shaclNS.group:
+                        updatedIRM.add((URIRef(o2), self.rdfSyntax.type, self.shaclNS.PropertyGroup))
+                    if p2 != self.shaclNS['in'] and p2 != self.shaclNS.hasValue and p2 != self.shaclNS['or']:
+                        updatedIRM.add((s2,p2,o2))
+                    elif p2 == self.shaclNS['in'] or p2 == self.shaclNS.hasValue:
+                        # Get the content of the RDF lists that contain the values of sh:in
+                        inputRDFlist = self.getElementsOfRDFlist(self.SHACL, o2)
+                        values = sorted(inputRDFlist)
+                        list_node = self.createRDFListFromList(values, updatedIRM)
+                        updatedIRM.add((s2, p2, list_node))
+                    elif p2 == self.shaclNS['or']:
+                        # Get the content of the RDF lists that contain the values of sh:or [contraintType,constraintValue]
+                        inputRDFlist = self.getElementsOfRDFlistOr(self.SHACL, o2) 
+                        list_node_superShapeOr = self.createRDFListFromListOr(inputRDFlist, updatedIRM) 
+                        updatedIRM.add((s2, p2, list_node_superShapeOr))
+            #    break
 
     # This function looks for the simple shapes that were found as equivalent (from the IRM and the input), looks for their respective constraints and call the procedure integrateSimpleShapes which will integrate the shapes and insert them in the updated IRM graph
     def integrateSimpleShapesWithEquivalence(self, inputShapeGraph, currentIRMGraph, updatedIRM: Graph, IrmSimpleShapesWithEquivalence, InputGraphSimpleShapesWithEquivalence : List):
