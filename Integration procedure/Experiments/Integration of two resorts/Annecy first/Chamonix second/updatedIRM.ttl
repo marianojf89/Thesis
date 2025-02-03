@@ -27,7 +27,6 @@
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline_sup> a sh:NodeShape ;
     sh:deactivated true ;
-    sh:nodeKind sh:IRI ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Discipline> .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/GroupLesson_belongs_to_discipline_sub1_1> a sh:NodeShape ;
@@ -156,7 +155,8 @@
     sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_discipline> ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
-            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_discipline> ] .
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/teaches_discipline> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sub1_1> a sh:NodeShape ;
     sh:deactivated true ;
@@ -275,12 +275,6 @@
             sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Mp_address> ] ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint> .
 
-<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance_sup> a sh:NodeShape ;
-    sh:deactivated true ;
-    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance> ;
-            sh:nodeKind sh:IRIOrLiteral ;
-            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] .
-
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sub1_1> a sh:NodeShape ;
     sh:deactivated true ;
     sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sup> ;
@@ -335,7 +329,8 @@
             sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_teaching_level> ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
-            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teaching_level> ] .
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_teaching_level> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_end_date_sup> a sh:NodeShape ;
     sh:deactivated true ;
@@ -458,13 +453,15 @@
             sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/practice_discipline> ] ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student> .
 
-<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sup> a sh:NodeShape ;
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sub1_1> a sh:NodeShape ;
     sh:deactivated true ;
-    sh:nodeKind sh:IRIOrLiteral ;
+    sh:node <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sup> ;
     sh:property [ sh:class <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Country> ;
             sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance> ;
             sh:minCount 1 ;
-            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] .
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage> .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sub1_1> a sh:NodeShape ;
     sh:deactivated true ;
@@ -539,7 +536,8 @@
             sh:maxCount 6 ;
             sh:minCount 1 ;
             sh:nodeKind sh:IRI ;
-            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_service> ] .
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_service> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sub1_1> a sh:NodeShape ;
     sh:deactivated true ;
@@ -643,6 +641,8 @@
             sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/name> ] ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor> .
 
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_discipline> a sh:PropertyGroup .
+
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language_sup> a sh:NodeShape ;
     sh:deactivated true ;
     sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Instructor_teaches_in_language> ;
@@ -712,8 +712,6 @@
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/MeetingPoint_Mp_address> a sh:PropertyGroup .
 
-<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_country_provenance> a sh:PropertyGroup .
-
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service_sup> a sh:NodeShape ;
     sh:deactivated true ;
     sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Package_has_service> ;
@@ -745,6 +743,8 @@
             sh:minCount 1 ;
             sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_students> ] ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/PrivateLesson_has_teaching_level> a sh:PropertyGroup .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Season_has_end_date> a sh:PropertyGroup .
 
@@ -802,6 +802,13 @@
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_practice_discipline> a sh:PropertyGroup .
 
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance_sup> a sh:NodeShape ;
+    sh:deactivated true ;
+    sh:property [ sh:group <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance> ;
+            sh:nodeKind sh:IRIOrLiteral ;
+            sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/has_country_provenance> ] ;
+    sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage> .
+
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_gives_lesson> a sh:PropertyGroup .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_has_meetingPoint_sup> a sh:NodeShape ;
@@ -818,6 +825,8 @@
             sh:minCount 2 ;
             sh:path <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/offers_discipline> ] ;
     sh:targetClass <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool> .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_offers_service> a sh:PropertyGroup .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_opens_at_sup> a sh:NodeShape ;
     sh:deactivated true ;
@@ -884,6 +893,8 @@
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_inscribed_in_lesson> a sh:PropertyGroup .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/Student_learned_level> a sh:PropertyGroup .
+
+<http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingLanguage_has_country_provenance> a sh:PropertyGroup .
 
 <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/TeachingSchool_closes_at_sup> a sh:NodeShape ;
     sh:deactivated true ;

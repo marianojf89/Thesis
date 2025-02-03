@@ -225,10 +225,12 @@ sh:property [
 
 ex:Chamonix_DisciplineShape
    a sh:NodeShape ;
-sh:nodeKind ex:IRIOrLiteral .
+sh:targetClass ex:Discipline ;
+sh:nodeKind sh:IRIOrLiteral .
 
 ex:Chamonix_LanguageShape
    a sh:NodeShape ;
+   sh:targetClass ex:TeachingLanguage ;
 sh:property[
    sh:path ex:has_country_provenance ;
    sh:nodeKind sh:IRIOrLiteral ;
