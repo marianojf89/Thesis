@@ -1,0 +1,99 @@
+@prefix : <http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72> .
+
+<http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#first_inputShape
+:first_inputShape rdf:type owl:ObjectProperty ;
+                  rdfs:domain :Integration ;
+                  rdfs:range :SourceShape ;
+                  rdfs:comment "This property relates an integration with a SHACL shape which takes the first place in the integration algorithm." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#generated_shape
+:generated_shape rdf:type owl:ObjectProperty ;
+                 rdfs:domain :Integration ;
+                 rdfs:range :IRMshape ;
+                 rdfs:comment "This property relates an integration with the IRMshapes that it generated as an outcome." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#has_constraint
+:has_constraint rdf:type owl:ObjectProperty ;
+                rdfs:domain :SHACLshape ;
+                rdfs:range :Constraint ;
+                rdfs:comment "This property relates a SHACL shape with a representation of its respective constraints." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#has_status
+:has_status rdf:type owl:ObjectProperty ;
+            rdfs:domain :Integration ;
+            rdfs:range :Status ;
+            rdfs:comment "This property represents the status of an Integration. If an Integration is Active, this means that it's the integration which generated the latter version of the output shapes. If the status is Inactive, then this means that the output shapes have another more recent related Integration." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#second_inputShape
+:second_inputShape rdf:type owl:ObjectProperty ;
+                   rdfs:domain :Integration ;
+                   rdfs:range :SourceShape ;
+                   rdfs:comment "This property relates an integration with a SHACL shape which takes the second place in the integration algorithm." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#source_shapeGraph
+:source_shapeGraph rdf:type owl:ObjectProperty ;
+                   rdfs:subPropertyOf owl:topObjectProperty ;
+                   rdfs:domain :SourceShape ;
+                   rdfs:range :SourceShapeGraph ;
+                   rdfs:comment "This property relates a SHACL shape which is a source of an integration with the respective SHACL shapes graph to which it belongs to." .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#Constraint
+:Constraint rdf:type owl:Class ;
+            rdfs:comment "This class represents constraints combinations as (constraintType constraintValue). These constraints are represented in SHACL syntax." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#IRMshape
+:IRMshape rdf:type owl:Class ;
+          rdfs:subClassOf :SHACLshape ;
+          rdfs:comment "This class represents the shapes generated as an outcome of an integration. Furthermore, these shapes belong to the Integrated Restriction Model (IRM)." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#Integration
+:Integration rdf:type owl:Class ;
+             rdfs:comment "This class represents an integration done between two input SHACL shapes which belong to two different source shapes graphs." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#SHACLshape
+:SHACLshape rdf:type owl:Class ;
+            rdfs:comment "This class represents a SHACL shape." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#SourceShape
+:SourceShape rdf:type owl:Class ;
+             rdfs:subClassOf :SHACLshape ;
+             rdfs:comment "This class represents a SHACL shape which is one of the inputs of an integration." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#SourceShapeGraph
+:SourceShapeGraph rdf:type owl:Class ;
+                  rdfs:comment "This class represents a SHACL shapes graph which is the source of an Integration." .
+
+
+###  http://www.semanticweb.org/marianoferreirone/ontologies/2024/11/untitled-ontology-72#Status
+:Status rdf:type owl:Class ;
+        rdfs:comment "This class represents the status of an integration, which could be Active or Inactive. It allows to represent if a specific Integration is the last one related to the specific generated shapes (Active), or if it's a previous related integration (Inactive)." .
+
+
+###  Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi
