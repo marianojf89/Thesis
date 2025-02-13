@@ -1,4 +1,4 @@
-The implementation of the integration procedure has been done by using Python v3.13.1. In addition, the rdflib library (https://rdflib.readthedocs.io/en/stable/#) has provided important functionalities for the manipulation of the IRM.
+The implementation of the integration procedure has been done by using Python v3.13.1. In addition, the rdflib library (https://rdflib.readthedocs.io/en/stable/#) v7.1.1 has provided important functionalities for the manipulation of the IRM.
 This implementation comprehends the following features so far:
 
 - The shapes equivalence detection procedure, including the detection of simple and compound shapes equivalence. It's worth to mention that the implementation recognizes those property shapes which are defined as sh:property blankNode and expects a sh:targetClass definition in the defined node shapes. 
