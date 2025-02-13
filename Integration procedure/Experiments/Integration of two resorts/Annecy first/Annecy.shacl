@@ -2,7 +2,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
-@prefix ex: <http://localhost/ontology/esf_ontology/> .
+@prefix ex: <http://www.semanticweb.org/valraiso/ontologies/2024/1/esfvel_ontology/> .
 
 ex:Annecy_TeachingSchoolShape
    a sh:NodeShape ;
