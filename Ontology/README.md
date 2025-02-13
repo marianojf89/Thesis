@@ -1,1 +1,1 @@
-This folder contains the Ski Resort ontology which has been created based on the French Ski School enterprise knowledge.
+This folder contains the Ski Resort ontology which has been created based on the French Ski School enterprise knowledge. This ontology is used as the underlying model for the example SHACL shape graphs that are used in the experiments.
