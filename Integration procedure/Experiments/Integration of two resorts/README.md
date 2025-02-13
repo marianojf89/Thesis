@@ -1,1 +1,1 @@
-This folder contains the experiments related to the integration of two SHACL shape graphs which represent two different French resorts.
+This folder contains the experiments related to the integration of two SHACL shape graphs which represent two different French resorts. Furthermore, two different experiments are done, where the order in which the shape graphs are integrated is changed.
