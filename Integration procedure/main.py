@@ -1254,8 +1254,8 @@ if __name__ == "__main__":
     
     start_time = time.time()
 
-    InputShape1Path = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Annecy first/Execution - Chamonix second/Chamonix.shacl'
-    currentIrmPath = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/Integration procedure/Implementation and experimentation/inputs/Integrations/Integration use case 1/Execution - Annecy first/Execution - Chamonix second/currentIRM.ttl'
+    InputShape1Path = 'PathToInputSHACLshapeGraph'
+    currentIrmPath = 'PathToCurrentIRMversion'
 
     InputShapeGraph = Graph()
     
