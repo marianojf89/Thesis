@@ -8,11 +8,11 @@ owlSyntax = Namespace('http://www.w3.org/2002/07/owl#')
 shaclSyntax = Namespace('http://www.w3.org/ns/shacl#')
 
 ## Set input files
-InputRDFdata = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/RDFContext.ttl'
-InputOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/ESF_contextOntology_storm.owl'
-OutputSubOntologyContext = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/ski_resorts_subContext.ttl'
-CurrentIRM = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/updatedIRM.ttl'
-updatedIRMfile = 'C:/Users/micae/OneDrive - lifia.info.unlp.edu.ar/Documents/Doctorado/My research/PreValidation configuration/Experiments/Storm - cardinality/activatedIRM_storm.shacl'
+InputRDFdata = 'pathToRDFgraphWhichContainsTheContextKnowledge'
+InputOntologyContext = 'pathToTheOntologyContext'
+OutputSubOntologyContext = 'pathToDepositTheSubOntologyThatMatchesTheContext'
+CurrentIRM = 'pathToTheCurrentIRMversion'
+updatedIRMfile = 'pathToDepositTheConfiguredIRM'
 
 ### Set the RDF graph which has the active context
 InputRDFdataGraph = Graph()
@@ -38,8 +38,6 @@ WHERE { ?subject a :Context ;
 qres = InputRDFdataGraph.query(firstContextQuery)
 for row in qres:
     activeContext = row.subject
-
-#print(activeContext)
 
 ### Query for retrieving the subgraph of the ontology which has the characteristics related to the active context
 secondContextQuery = """
@@ -74,10 +72,8 @@ FILTER NOT EXISTS { ?constraint1 owl:onProperty ?constraint2 . }
 
 ## Retrieve the subgraph of the ontology which has the characteristics related to the active context
 qres2 = InputOntologyContextGraph.query(secondContextQuery, initBindings={"activeContext": Literal(activeContext)})
-# print(qres2)
 InputOntologyContextSUBGraph = Graph()
 for row2 in qres2:
-    # print(row2)
     InputOntologyContextSUBGraph.add(row2)
 InputOntologyContextSUBGraph.serialize(destination=OutputSubOntologyContext,format="ttl")
 
@@ -85,13 +81,10 @@ subContextOntologyRetrieved = []
 
 ## From the subgraph of the ontology, retrieve [[class, path], [constraint1, constraintValue1], [constraint2, constraintValue2],...,['end','end'],[class2, path2],...)
 for s,p,o in InputOntologyContextSUBGraph.triples((None, rdfSyntax.type, None)):
-    #print(s)
     for s1,p1,o1 in InputOntologyContextSUBGraph.triples((s, None, None)):
           if p1 != rdfSyntax.type:
-                #print(s,p1)
                 subContextOntologyRetrieved.append([s,p1])
                 for s2,p2,o2 in InputOntologyContextSUBGraph.triples((o1, None, None)):
-                     #print(s,p1,p2,o2)
                      subContextOntologyRetrieved.append([p2,o2])
                 subContextOntologyRetrieved.append(['end','end'])
 
@@ -305,8 +298,8 @@ FILTER( str(?path) = str(?varInputPath)  ) .
 }
 """
 
-### ** Retrieve those candidate shapes which need a decision from the user, meaning those shapes which are active and are not the unique active shapes in their respective group
-## ** The respective nodeShapes are saved in the list candidateNodeShapesContextualized (*** This list will be sent to the user ***)
+### Retrieve those candidate shapes which need a decision from the user, meaning those shapes which are active and are not the unique active shapes in their respective group
+## The respective nodeShapes are saved in the list candidateNodeShapesContextualized (*** This list will be sent to the user ***)
 IRMgroupWithCandidatesContextualized = InputCurrentIRMGraph.query(IRMcandidateGroupShapesFiltered)
 candidateNodeShapesContextualized = []
 for group in IRMgroupWithCandidatesContextualized:
@@ -336,8 +329,8 @@ for group in IRMGroupsWithMultipleShapes:
      if len(lookForActiveShapes) == 0:
           groupsWithMultipleShapesAllDeactivated.append([group[0], group[1]])
 
-### ** Finally, retrieve the related list of nodeShapes of those groups which have multiple shapes and they are all deactivated.
-## *** The list of nodeShape IRIs nodeShapesOfGroupsWithMultipleShapesAllDeactivated will be sent to the user ***
+### Finally, retrieve the related list of nodeShapes of those groups which have multiple shapes and they are all deactivated.
+## The list of nodeShape IRIs nodeShapesOfGroupsWithMultipleShapesAllDeactivated will be sent to the user
 nodeShapesOfGroupsWithMultipleShapesAllDeactivated = []
 IRMqueryNodeShapesOfGroup = IRMcomplementGroupQueryBase + ' }'
 for group2 in groupsWithMultipleShapesAllDeactivated:
